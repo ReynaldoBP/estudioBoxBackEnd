@@ -2,51 +2,53 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoEncuestaRepository;
+use App\Repository\InfoPerfilRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoEncuesta
- * @ORM\Table(name="INFO_ENCUESTA")
- * @ORM\Entity(repositoryClass="App\Repository\InfoEncuestaRepository")
+ * InfoPerfil
+ *
+ * @ORM\Table(name="INFO_PERFIL")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoPerfilRepository")
  */
-class InfoEncuesta
+class InfoPerfil
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_ENCUESTA", type="integer")
+     * @ORM\Column(name="ID_PERFIL", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoArea
+    * @var InfoModuloAccion
     *
-    * @ORM\ManyToOne(targetEntity="InfoArea")
+    * @ORM\ManyToOne(targetEntity="InfoModuloAccion")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="AREA_ID", referencedColumnName="ID_AREA")
+    * @ORM\JoinColumn(name="MODULO_ACCION_ID", referencedColumnName="ID_MODULO_ACCION")
     * })
     */
-    private $AREA_ID;
+    private $MODULO_ACCION_ID;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="DESCRIPCION", type="string", length=255)
+    * @var InfoUsuario
+    *
+    * @ORM\ManyToOne(targetEntity="InfoUsuario")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="USUARIO_ID", referencedColumnName="ID_USUARIO")
+    * })
+    */
+    private $USUARIO_ID;
+
+    /**
+     * @ORM\Column(type="string", length=255)
      */
     private $DESCRIPCION;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="TITULO", type="string", length=255, nullable=true)
-     */
-    private $TITULO;
-
-    /**
-     * @ORM\Column(type="string", length=50)
+     * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $ESTADO;
 
@@ -74,94 +76,79 @@ class InfoEncuesta
      */
     private $FE_MODIFICACION;
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Get AREA_ID
-     *
-     * @return \App\Entity\InfoArea
-     */
-    public function getAREAID()
-    {
-        return $this->AREA_ID;
-    }
 
     /**
-     * Set setAREAID
+     * Set USUARIOID
      *
-     * @param \App\Entity\InfoArea $AREA_ID
+     * @param \App\Entity\InfoUsuario $USUARIOID
      *
-     * @return InfoPregunta
+     * @return InfoPerfil
      */
-    public function setAREAID(\App\Entity\InfoArea $AREA_ID = null)
+    public function setUSUARIOID(\App\Entity\InfoUsuario $USUARIOID = null)
     {
-        $this->AREA_ID = $AREA_ID;
+        $this->USUARIO_ID = $USUARIOID;
 
         return $this;
     }
 
     /**
-     * Set DESCRIPCION
+     * Get USUARIOID
      *
-     * @param string $DESCRIPCION
-     *
-     * @return InfoEncuesta
+     * @return \App\Entity\InfoUsuario
      */
-    public function setDESCRIPCION($DESCRIPCION)
+    public function getUSUARIOID()
+    {
+        return $this->USUARIO_ID;
+    }
+
+    /**
+     * Set MODULOACCIONID
+     *
+     * @param \App\Entity\InfoModuloAccion $MODULOACCIONID
+     *
+     * @return InfoPerfil
+     */
+    public function setMODULOACCIONID(\App\Entity\InfoModuloAccion $MODULOACCIONID = null)
+    {
+        $this->MODULO_ACCION_ID = $MODULOACCIONID;
+
+        return $this;
+    }
+
+    /**
+     * Get MODULOACCIONID
+     *
+     * @return \App\Entity\InfoModuloAccion
+     */
+    public function getMODULOACCIONID()
+    {
+        return $this->MODULO_ACCION_ID;
+    }
+
+    public function getDESCRIPCION(): ?string
+    {
+        return $this->DESCRIPCION;
+    }
+
+    public function setDESCRIPCION(string $DESCRIPCION): self
     {
         $this->DESCRIPCION = $DESCRIPCION;
 
         return $this;
     }
 
-    /**
-     * Get DESCRIPCION
-     *
-     * @return string
-     */
-    public function getDESCRIPCION()
-    {
-        return $this->DESCRIPCION;
-    }
-
-    /**
-     * Set TITULO
-     *
-     * @param string $TITULO
-     *
-     * @return InfoEncuesta
-     */
-    public function setTITULO($TITULO)
-    {
-        $this->TITULO = $TITULO;
-
-        return $this;
-    }
-
-    /**
-     * Get TITULO
-     *
-     * @return string
-     */
-    public function getTITULO()
-    {
-        return $this->TITULO;
-    }
 
     public function getESTADO(): ?string
     {
         return $this->ESTADO;
     }
 
-    public function setESTADO(string $ESTADO): self
+    public function setESTADO(?string $ESTADO): self
     {
         $this->ESTADO = $ESTADO;
 

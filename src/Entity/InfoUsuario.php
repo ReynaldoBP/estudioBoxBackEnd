@@ -2,51 +2,62 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoEncuestaRepository;
+use App\Repository\InfoUsuarioRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoEncuesta
- * @ORM\Table(name="INFO_ENCUESTA")
- * @ORM\Entity(repositoryClass="App\Repository\InfoEncuestaRepository")
+ * InfoCliente
+ * @ORM\Table(name="INFO_USUARIO")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoUsuarioRepository")
  */
-class InfoEncuesta
+class InfoUsuario
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_ENCUESTA", type="integer")
+     * @ORM\Column(name="ID_USUARIO", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoArea
+    * @var AdmiTipoRol
     *
-    * @ORM\ManyToOne(targetEntity="InfoArea")
+    * @ORM\ManyToOne(targetEntity="AdmiTipoRol")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="AREA_ID", referencedColumnName="ID_AREA")
+    * @ORM\JoinColumn(name="TIPO_ROL_ID", referencedColumnName="ID_TIPO_ROL")
     * })
     */
-    private $AREA_ID;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="DESCRIPCION", type="string", length=255)
-     */
-    private $DESCRIPCION;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="TITULO", type="string", length=255, nullable=true)
-     */
-    private $TITULO;
+    private $TIPO_ROL_ID;
 
     /**
      * @ORM\Column(type="string", length=50)
+     */
+    private $IDENTIFICACION;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $NOMBRE;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $APELLIDO;
+
+    /**
+     * @ORM\Column(type="string", length=50)
+     */
+    private $CONTRASENIA;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $CORREO;
+
+    /**
+     * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $ESTADO;
 
@@ -74,94 +85,102 @@ class InfoEncuesta
      */
     private $FE_MODIFICACION;
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
     /**
-     * Get AREA_ID
+     * Get TIPO_ROL_ID
      *
-     * @return \App\Entity\InfoArea
+     * @return \App\Entity\AdmiTipoRol
      */
-    public function getAREAID()
+    public function getTIPOROLID()
     {
-        return $this->AREA_ID;
+        return $this->TIPO_ROL_ID;
     }
 
     /**
-     * Set setAREAID
+     * Set TIPO_ROL_ID
      *
-     * @param \App\Entity\InfoArea $AREA_ID
+     * @param \App\Entity\AdmiTipoRol $TIPO_ROL_ID
      *
      * @return InfoPregunta
      */
-    public function setAREAID(\App\Entity\InfoArea $AREA_ID = null)
+    public function setTIPOROLID(\App\Entity\AdmiTipoRol $TIPO_ROL_ID = null)
     {
-        $this->AREA_ID = $AREA_ID;
+        $this->TIPO_ROL_ID = $TIPO_ROL_ID;
 
         return $this;
     }
 
-    /**
-     * Set DESCRIPCION
-     *
-     * @param string $DESCRIPCION
-     *
-     * @return InfoEncuesta
-     */
-    public function setDESCRIPCION($DESCRIPCION)
+    public function getIDENTIFICACION(): ?string
     {
-        $this->DESCRIPCION = $DESCRIPCION;
+        return $this->IDENTIFICACION;
+    }
+
+    public function setIDENTIFICACION(string $IDENTIFICACION): self
+    {
+        $this->IDENTIFICACION = $IDENTIFICACION;
 
         return $this;
     }
 
-    /**
-     * Get DESCRIPCION
-     *
-     * @return string
-     */
-    public function getDESCRIPCION()
+    public function getNOMBRE(): ?string
     {
-        return $this->DESCRIPCION;
+        return $this->NOMBRE;
     }
 
-    /**
-     * Set TITULO
-     *
-     * @param string $TITULO
-     *
-     * @return InfoEncuesta
-     */
-    public function setTITULO($TITULO)
+    public function setNOMBRE(string $NOMBRE): self
     {
-        $this->TITULO = $TITULO;
+        $this->NOMBRE = $NOMBRE;
 
         return $this;
     }
 
-    /**
-     * Get TITULO
-     *
-     * @return string
-     */
-    public function getTITULO()
+    public function getAPELLIDO(): ?string
     {
-        return $this->TITULO;
+        return $this->APELLIDO;
     }
+
+    public function setAPELLIDO(string $APELLIDO): self
+    {
+        $this->APELLIDO = $APELLIDO;
+
+        return $this;
+    }
+
+    public function getCONTRASENIA(): ?string
+    {
+        return $this->CONTRASENIA;
+    }
+
+    public function setCONTRASENIA(string $CONTRASENIA): self
+    {
+        $this->CONTRASENIA = $CONTRASENIA;
+
+        return $this;
+    }
+
+    public function getCORREO(): ?string
+    {
+        return $this->CORREO;
+    }
+
+    public function setCORREO(string $CORREO): self
+    {
+        $this->CORREO = $CORREO;
+
+        return $this;
+    }
+
 
     public function getESTADO(): ?string
     {
         return $this->ESTADO;
     }
 
-    public function setESTADO(string $ESTADO): self
+    public function setESTADO(?string $ESTADO): self
     {
         $this->ESTADO = $ESTADO;
 
@@ -215,4 +234,5 @@ class InfoEncuesta
 
         return $this;
     }
+
 }

@@ -1,0 +1,147 @@
+{
+    "doctrine/annotations": {
+        "version": "1.13",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "a2759dd6123694c8d901d0ec80006e044c2e6457"
+        },
+        "files": [
+            "./config/routes/annotations.yaml"
+        ]
+    },
+    "doctrine/doctrine-bundle": {
+        "version": "2.7",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.3",
+            "ref": "b8ddff356705ad8e704ea75b6872ce89a15d614d"
+        },
+        "files": [
+            "./config/packages/doctrine.yaml",
+            "./config/packages/prod/doctrine.yaml",
+            "./config/packages/test/doctrine.yaml",
+            "./src/Entity/.gitignore",
+            "./src/Repository/.gitignore"
+        ]
+    },
+    "doctrine/doctrine-migrations-bundle": {
+        "version": "3.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.1",
+            "ref": "1d01ec03c6ecbd67c3375c5478c9a423ae5d6a33"
+        },
+        "files": [
+            "./config/packages/doctrine_migrations.yaml",
+            "./migrations/.gitignore"
+        ]
+    },
+    "friendsofsymfony/rest-bundle": {
+        "version": "3.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "2.2",
+            "ref": "fa845143b7e0a4c70aedd1a88c549e6d977e9ae5"
+        },
+        "files": [
+            "./config/packages/fos_rest.yaml"
+        ]
+    },
+    "jms/serializer-bundle": {
+        "version": "5.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "3.0",
+            "ref": "384cec52df45f3bfd46a09930d6960a58872b268"
+        },
+        "files": [
+            "./config/packages/dev/jms_serializer.yaml",
+            "./config/packages/jms_serializer.yaml",
+            "./config/packages/prod/jms_serializer.yaml"
+        ]
+    },
+    "symfony/console": {
+        "version": "4.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "4.4",
+            "ref": "fd5340d07d4c90504843b53da41525cf42e31f5c"
+        },
+        "files": [
+            "./bin/console",
+            "./config/bootstrap.php"
+        ]
+    },
+    "symfony/flex": {
+        "version": "1.19",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "146251ae39e06a95be0fe3d13c807bcf3938b172"
+        },
+        "files": [
+            "./.env"
+        ]
+    },
+    "symfony/framework-bundle": {
+        "version": "4.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "4.4",
+            "ref": "24eb45d1355810154890460e6a05c0ca27318fe7"
+        },
+        "files": [
+            "./config/bootstrap.php",
+            "./config/packages/cache.yaml",
+            "./config/packages/framework.yaml",
+            "./config/packages/test/framework.yaml",
+            "./config/preload.php",
+            "./config/routes/dev/framework.yaml",
+            "./config/services.yaml",
+            "./public/index.php",
+            "./src/Controller/.gitignore",
+            "./src/Kernel.php"
+        ]
+    },
+    "symfony/maker-bundle": {
+        "version": "1.39",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
+        }
+    },
+    "symfony/routing": {
+        "version": "4.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "4.2",
+            "ref": "683dcb08707ba8d41b7e34adb0344bfd68d248a7"
+        },
+        "files": [
+            "./config/packages/prod/routing.yaml",
+            "./config/packages/routing.yaml",
+            "./config/routes.yaml"
+        ]
+    },
+    "symfony/web-server-bundle": {
+        "version": "4.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "3.3",
+            "ref": "dae9b39fd6717970be7601101ce5aa960bf53d9a"
+        }
+    }
+}

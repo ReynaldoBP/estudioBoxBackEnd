@@ -2,48 +2,39 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoEncuestaRepository;
+use App\Repository\AdmiTipoOpcionRespuestaRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoEncuesta
- * @ORM\Table(name="INFO_ENCUESTA")
- * @ORM\Entity(repositoryClass="App\Repository\InfoEncuestaRepository")
+ * AdmiTipoOpcionRespuesta
+ *
+ * @ORM\Table(name="ADMI_TIPO_OPCION_RESPUESTA")
+ * @ORM\Entity(repositoryClass=AdmiTipoOpcionRespuestaRepository::class)
  */
-class InfoEncuesta
+class AdmiTipoOpcionRespuesta
 {
     /**
-     * @var int
-     *
-     * @ORM\Column(name="ID_ENCUESTA", type="integer")
+     * @ORM\Column(name="ID_TIPO_OPCION_RESPUESTA", type="integer")
      * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
      */
     private $id;
 
     /**
-    * @var InfoArea
-    *
-    * @ORM\ManyToOne(targetEntity="InfoArea")
-    * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="AREA_ID", referencedColumnName="ID_AREA")
-    * })
-    */
-    private $AREA_ID;
+     * @ORM\Column(type="string", length=100, nullable=true)
+     */
+    private $TIPO_RESPUESTA;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="DESCRIPCION", type="string", length=255)
+     * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $DESCRIPCION;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="TITULO", type="string", length=255, nullable=true)
+     * @ORM\Column(type="integer", nullable=true)
      */
-    private $TITULO;
+    private $VALOR;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -74,86 +65,45 @@ class InfoEncuesta
      */
     private $FE_MODIFICACION;
 
-    /**
-     * Get id
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Get AREA_ID
-     *
-     * @return \App\Entity\InfoArea
-     */
-    public function getAREAID()
+    public function getTIPO_RESPUESTA(): ?string
     {
-        return $this->AREA_ID;
+        return $this->TIPO_RESPUESTA;
     }
 
-    /**
-     * Set setAREAID
-     *
-     * @param \App\Entity\InfoArea $AREA_ID
-     *
-     * @return InfoPregunta
-     */
-    public function setAREAID(\App\Entity\InfoArea $AREA_ID = null)
+    public function setTIPO_RESPUESTA(?string $TIPO_RESPUESTA): self
     {
-        $this->AREA_ID = $AREA_ID;
+        $this->TIPO_RESPUESTA = $TIPO_RESPUESTA;
 
         return $this;
     }
 
-    /**
-     * Set DESCRIPCION
-     *
-     * @param string $DESCRIPCION
-     *
-     * @return InfoEncuesta
-     */
-    public function setDESCRIPCION($DESCRIPCION)
+    public function getDESCRIPCION(): ?string
+    {
+        return $this->DESCRIPCION;
+    }
+
+    public function setDESCRIPCION(?string $DESCRIPCION): self
     {
         $this->DESCRIPCION = $DESCRIPCION;
 
         return $this;
     }
 
-    /**
-     * Get DESCRIPCION
-     *
-     * @return string
-     */
-    public function getDESCRIPCION()
+    public function getVALOR(): ?int
     {
-        return $this->DESCRIPCION;
+        return $this->VALOR;
     }
 
-    /**
-     * Set TITULO
-     *
-     * @param string $TITULO
-     *
-     * @return InfoEncuesta
-     */
-    public function setTITULO($TITULO)
+    public function setVALOR(?int $VALOR): self
     {
-        $this->TITULO = $TITULO;
+        $this->VALOR = $VALOR;
 
         return $this;
-    }
-
-    /**
-     * Get TITULO
-     *
-     * @return string
-     */
-    public function getTITULO()
-    {
-        return $this->TITULO;
     }
 
     public function getESTADO(): ?string

@@ -12,6 +12,8 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
 use App\Entity\InfoUsuario;
 use App\Entity\AdmiTipoRol;
+use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoEmpresa;
 
 class InfoUsuarioController extends AbstractController
 {
@@ -36,6 +38,7 @@ class InfoUsuarioController extends AbstractController
         $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
         $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"webMovil";
         $objResponse          = new Response;
@@ -70,6 +73,29 @@ class InfoUsuarioController extends AbstractController
                 $entityUsuario->setFECREACION($objDatetimeActual);
                 $em->persist($entityUsuario);
                 $em->flush();
+                if($objTipoRol->getDESCRIPCIONTIPOROL()=="EMPRESA")
+                {
+                    if(empty($intIdEmpresa) || $intIdEmpresa == "")
+                    {
+                        throw new \Exception("El parámetro intIdEmpresa es obligatorio cuando el tipo de rol es Empresa.");
+                    }
+                    else
+                    {
+                        $objEmpresa = $this->getDoctrine()->getRepository(InfoEmpresa::class)->find($intIdEmpresa);
+                        if(empty($objEmpresa) || !is_object($objEmpresa))
+                        {
+                            throw new \Exception("No se encontró la empresa con los parámetros enviados.");
+                        }
+                    }
+                    $entityUsuarioEmpresa = new InfoUsuarioEmpresa();
+                    $entityUsuarioEmpresa->setUSUARIOID($entityUsuario);
+                    $entityUsuarioEmpresa->setEMPRESAID($objEmpresa);
+                    $entityUsuarioEmpresa->setESTADO(strtoupper($strEstado));
+                    $entityUsuarioEmpresa->setUSRCREACION($strUsrSesion);
+                    $entityUsuarioEmpresa->setFECREACION($objDatetimeActual);
+                    $em->persist($entityUsuarioEmpresa);
+                    $em->flush();
+                }
                 $strMensaje = "¡Usuario creado con éxito!";
                 if($em->getConnection()->isTransactionActive())
                 {

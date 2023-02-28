@@ -69,7 +69,7 @@ class InfoPerfilController extends AbstractController
             }
             if(count($arrayPerfil["resultados"])==0)
             {
-                throw new \Exception("No existen empresas con los parámetros enviados.");
+                throw new \Exception("No existen perfiles con los parámetros enviados.");
             }
         }
         catch(\Exception $ex)

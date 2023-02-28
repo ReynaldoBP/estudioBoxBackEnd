@@ -2,42 +2,44 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoClienteEncuestaRepository;
+use App\Repository\InfoUsuarioEmpresaRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoClienteEncuesta
- * @ORM\Table(name="INFO_CLIENTE_ENCUESTA")
- * @ORM\Entity(repositoryClass=InfoClienteEncuestaRepository::class)
+ * InfoUsuarioEmpresa
+ * @ORM\Table(name="INFO_USUARIO_EMPRESA")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoUsuarioEmpresaRepository")
  */
-class InfoClienteEncuesta
+class InfoUsuarioEmpresa
 {
     /**
+     * @var int
+     *
+     * @ORM\Column(name="ID_USUARIO_EMPRESA", type="integer")
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(name="ID_CLT_ENCUESTA",type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoCliente
+    * @var InfoUsuario
     *
-    * @ORM\ManyToOne(targetEntity="InfoCliente")
+    * @ORM\ManyToOne(targetEntity="InfoUsuario")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
+    * @ORM\JoinColumn(name="USUARIO_ID", referencedColumnName="ID_USUARIO")
     * })
     */
-    private $CLIENTE_ID;
+    private $USUARIO_ID;
 
     /**
-    * @var InfoEncuesta
+    * @var InfoEmpresa
     *
-    * @ORM\ManyToOne(targetEntity="InfoEncuesta")
+    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="ENCUESTA_ID", referencedColumnName="ID_ENCUESTA")
+    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
     * })
     */
-    private $ENCUESTA_ID;
+    private $EMPRESA_ID;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -55,15 +57,18 @@ class InfoClienteEncuesta
     private $FE_CREACION;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @var string
+     *
+     * @ORM\Column(name="USR_MODIFICACION", type="string", length=255, nullable=true)
      */
     private $USR_MODIFICACION;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true)
+     * @var \DateTime
+     *
+     * @ORM\Column(name="FE_MODIFICACION", type="datetime", nullable=true)
      */
     private $FE_MODIFICACION;
-
 
     public function getId(): ?int
     {
@@ -71,49 +76,49 @@ class InfoClienteEncuesta
     }
 
     /**
-     * Get CLIENTE_ID
+     * Get USUARIO_ID
      *
-     * @return \App\Entity\InfoCliente
+     * @return \App\Entity\InfoUsuario
      */
-    public function getCLIENTEID()
+    public function getUSUARIOID()
     {
-        return $this->CLIENTE_ID;
+        return $this->USUARIO_ID;
     }
 
     /**
-     * Set setCLIENTEID
+     * Set setUSUARIOID
      *
-     * @param \App\Entity\InfoCliente $CLIENTE_ID
+     * @param \App\Entity\InfoUsuario $USUARIO_ID
      *
-     * @return InfoClienteEncuesta
+     * @return InfoUsuarioEmpresa
      */
-    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTE_ID = null)
+    public function setUSUARIOID(\App\Entity\InfoUsuario $USUARIO_ID = null)
     {
-        $this->CLIENTE_ID = $CLIENTE_ID;
+        $this->USUARIO_ID = $USUARIO_ID;
 
         return $this;
     }
 
     /**
-     * Get ENCUESTA_ID
+     * Get EMPRESA_ID
      *
-     * @return \App\Entity\InfoEncuesta
+     * @return \App\Entity\InfoEmpresa
      */
-    public function getENCUESTAID()
+    public function getEMPRESAID()
     {
-        return $this->ENCUESTA_ID;
+        return $this->EMPRESA_ID;
     }
 
     /**
-     * Set setENCUESTAID
+     * Set setEMPRESAID
      *
-     * @param \App\Entity\InfoEncuesta $ENCUESTA_ID
+     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
      *
-     * @return InfoClienteEncuesta
+     * @return InfoUsuarioEmpresa
      */
-    public function setENCUESTAID(\App\Entity\InfoEncuesta $ENCUESTA_ID = null)
+    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
     {
-        $this->ENCUESTA_ID = $ENCUESTA_ID;
+        $this->EMPRESA_ID = $EMPRESA_ID;
 
         return $this;
     }

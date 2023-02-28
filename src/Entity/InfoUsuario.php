@@ -105,7 +105,7 @@ class InfoUsuario
      *
      * @param \App\Entity\AdmiTipoRol $TIPO_ROL_ID
      *
-     * @return InfoPregunta
+     * @return InfoUsuario
      */
     public function setTIPOROLID(\App\Entity\AdmiTipoRol $TIPO_ROL_ID = null)
     {

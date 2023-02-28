@@ -10,7 +10,9 @@ use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
 use App\Entity\InfoCliente;
-
+use App\Entity\AdmiTipoRol;
+use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoUsuario;
 class InfoClienteController extends AbstractController
 {
     /**
@@ -189,6 +191,93 @@ class InfoClienteController extends AbstractController
                                                    "arrayCliente"  => isset($arrayCliente["resultados"]) && 
                                                                       !empty($arrayCliente["resultados"]) ? 
                                                                       $arrayCliente["resultados"][0]:[],
+                                                   "strMensaje"    => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiWeb/getClienteCriterio")
+     * 
+     * Documentación para la función 'getClienteCriterioWeb'.
+     *
+     * Función que permite listar el detalle o totalizado de clientes.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 27-02-2023
+     *
+     */
+    public function getClienteCriterioWeb(Request $objRequest)
+    {
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $strBanderaContador   = isset($arrayData["strBanderaContador"]) && !empty($arrayData["strBanderaContador"]) ? $arrayData["strBanderaContador"]:"NO";
+        $strBanderaEdad       = isset($arrayData["strBanderaEdad"]) && !empty($arrayData["strBanderaEdad"]) ? $arrayData["strBanderaEdad"]:"NO";
+        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayData["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            if($strBanderaContador=="SI")
+            {
+                $arrayData = $this->getDoctrine()->getRepository(InfoCliente::class)->getTotalCliente($arrayData);
+            }
+            elseif($strBanderaEdad=="SI")
+            {
+                $arrayData = $this->getDoctrine()->getRepository(InfoCliente::class)->getTotalClientePorEdad($arrayData);
+            }
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"])==0)
+            {
+                throw new \Exception("No existen clientes con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"     => $intStatus,
+                                                   "arrayData"     => isset($arrayData["resultados"]) && 
+                                                                      !empty($arrayData["resultados"]) ? 
+                                                                      $arrayData["resultados"]:[],
                                                    "strMensaje"    => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;

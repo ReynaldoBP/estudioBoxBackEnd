@@ -2,42 +2,34 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoClienteEncuestaRepository;
+use App\Repository\InfoSucursalRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoClienteEncuesta
- * @ORM\Table(name="INFO_CLIENTE_ENCUESTA")
- * @ORM\Entity(repositoryClass=InfoClienteEncuestaRepository::class)
+ * InfoSucursal
+ * @ORM\Table(name="INFO_SUCURSAL")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
  */
-class InfoClienteEncuesta
+class InfoSucursal
 {
     /**
+     * @var int
+     *
+     * @ORM\Column(name="ID_SUCURSAL", type="integer")
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(name="ID_CLT_ENCUESTA",type="integer")
+     * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoCliente
+    * @var InfoEmpresa
     *
-    * @ORM\ManyToOne(targetEntity="InfoCliente")
+    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
+    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
     * })
     */
-    private $CLIENTE_ID;
-
-    /**
-    * @var InfoEncuesta
-    *
-    * @ORM\ManyToOne(targetEntity="InfoEncuesta")
-    * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="ENCUESTA_ID", referencedColumnName="ID_ENCUESTA")
-    * })
-    */
-    private $ENCUESTA_ID;
+    private $EMPRESA_ID;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -55,15 +47,18 @@ class InfoClienteEncuesta
     private $FE_CREACION;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @var string
+     *
+     * @ORM\Column(name="USR_MODIFICACION", type="string", length=255, nullable=true)
      */
     private $USR_MODIFICACION;
 
     /**
-     * @ORM\Column(type="datetime", nullable=true)
+     * @var \DateTime
+     *
+     * @ORM\Column(name="FE_MODIFICACION", type="datetime", nullable=true)
      */
     private $FE_MODIFICACION;
-
 
     public function getId(): ?int
     {
@@ -71,49 +66,25 @@ class InfoClienteEncuesta
     }
 
     /**
-     * Get CLIENTE_ID
+     * Get EMPRESA_ID
      *
-     * @return \App\Entity\InfoCliente
+     * @return \App\Entity\InfoEmpresa
      */
-    public function getCLIENTEID()
+    public function getEMPRESAID()
     {
-        return $this->CLIENTE_ID;
+        return $this->EMPRESA_ID;
     }
 
     /**
-     * Set setCLIENTEID
+     * Set setEMPRESAID
      *
-     * @param \App\Entity\InfoCliente $CLIENTE_ID
+     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
      *
-     * @return InfoClienteEncuesta
+     * @return InfoSucursal
      */
-    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTE_ID = null)
+    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
     {
-        $this->CLIENTE_ID = $CLIENTE_ID;
-
-        return $this;
-    }
-
-    /**
-     * Get ENCUESTA_ID
-     *
-     * @return \App\Entity\InfoEncuesta
-     */
-    public function getENCUESTAID()
-    {
-        return $this->ENCUESTA_ID;
-    }
-
-    /**
-     * Set setENCUESTAID
-     *
-     * @param \App\Entity\InfoEncuesta $ENCUESTA_ID
-     *
-     * @return InfoClienteEncuesta
-     */
-    public function setENCUESTAID(\App\Entity\InfoEncuesta $ENCUESTA_ID = null)
-    {
-        $this->ENCUESTA_ID = $ENCUESTA_ID;
+        $this->EMPRESA_ID = $EMPRESA_ID;
 
         return $this;
     }
@@ -177,5 +148,4 @@ class InfoClienteEncuesta
 
         return $this;
     }
-
 }

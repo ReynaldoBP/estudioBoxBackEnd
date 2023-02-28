@@ -22,6 +22,16 @@ class InfoArea
     private $id;
 
     /**
+    * @var InfoSucursal
+    *
+    * @ORM\ManyToOne(targetEntity="InfoSucursal")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="SUCURSAL_ID", referencedColumnName="ID_SUCURSAL")
+    * })
+    */
+    private $SUCURSAL_ID;
+
+    /**
      * @ORM\Column(type="string", length=100)
      */
     private $AREA;
@@ -68,6 +78,31 @@ class InfoArea
     public function setAREA(string $AREA): self
     {
         $this->AREA = $AREA;
+
+        return $this;
+    }
+
+
+    /**
+     * Get SUCURSAL_ID
+     *
+     * @return \App\Entity\InfoSucursal
+     */
+    public function getSUCURSALID()
+    {
+        return $this->SUCURSAL_ID;
+    }
+
+    /**
+     * Set setSUCURSALID
+     *
+     * @param \App\Entity\InfoSucursal $SUCURSAL_ID
+     *
+     * @return InfoArea
+     */
+    public function setSUCURSALID(\App\Entity\InfoSucursal $SUCURSAL_ID = null)
+    {
+        $this->SUCURSAL_ID = $SUCURSAL_ID;
 
         return $this;
     }

@@ -37,10 +37,13 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strOrderBy          = "";
         try
         {
-            $strSelect  = " SELECT IE.*,IEM.NOMBRE_COMERCIAL,IA.AREA ";
+            $strSelect  = " SELECT IE.*,IEM.NOMBRE_COMERCIAL,IA.AREA,ISU.NOMBRE AS SUCURSAL ";
             $strFrom    = " FROM INFO_ENCUESTA IE 
                             JOIN INFO_AREA IA ON IE.AREA_ID=IA.ID_AREA
-                            JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=IA.EMPRESA_ID ";
+                            JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=IA.SUCURSAL_ID
+                            JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID 
+                            
+                            ";
             $strWhere   = " WHERE IE.ESTADO IN ('ACTIVO')";
             $strOrderBy = " ORDER BY IE.FE_CREACION ASC ";
             if(isset($arrayParametros["intIdEncuesta"]) && !empty($arrayParametros["intIdEncuesta"]))
@@ -63,6 +66,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");
             $objRsmBuilder->addScalarResult("NOMBRE_COMERCIAL", "strEmpresa", "string");
             $objRsmBuilder->addScalarResult("AREA", "strArea", "string");
+            $objRsmBuilder->addScalarResult("SUCURSAL", "strSucursal", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
             $objRsmBuilder->addScalarResult("USR_CREACION", "strusrCreacion", "string");
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");

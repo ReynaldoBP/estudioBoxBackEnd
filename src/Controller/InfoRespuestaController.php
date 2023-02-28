@@ -78,7 +78,7 @@ class InfoRespuestaController extends AbstractController
                 $entityCliente->setAUTENTICACIONRS("N");
                 $entityCliente->setEDAD($strEdad);
                 $entityCliente->setGENERO($strGenero);
-                $entityCliente->setESTADO("INACTIVO");
+                $entityCliente->setESTADO("AUTOMATICO");
                 $entityCliente->setUSRCREACION($strUsrSesion);
                 $entityCliente->setFECREACION($objDatetimeActual);
                 $em->persist($entityCliente);
@@ -106,7 +106,6 @@ class InfoRespuestaController extends AbstractController
                 $objPregunta = $this->getDoctrine()->getRepository(InfoPregunta::class)
                                     ->findOneBy(array("ESTADO" => "ACTIVO",
                                                       "id"     => $intIdPregunta));
-                error_log("Pregunta: ".$objPregunta->getDESCRIPCION());
                 if(!is_object($objPregunta) || empty($objPregunta))
                 {
                     throw new \Exception('No existe la pregunta con la descripción enviada por parámetro.');

@@ -31,10 +31,11 @@ class InfoClienteEncuestaController extends AbstractController
      */
     public function getPromedioClteGenero(Request $objRequest)
     {
+        error_reporting( error_reporting() & ~E_NOTICE );
         $arrayRequest         = json_decode($objRequest->getContent(),true);
-        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
-        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
-        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $objResponse          = new Response;
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
@@ -66,14 +67,14 @@ class InfoClienteEncuestaController extends AbstractController
                             $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
                             if(!empty($intIdEmpresa))
                             {
-                                $arrayData["intIdEmpresa"] = $intIdEmpresa;
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
                             }
                         }
                     }
                 }
             }
             $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                            ->getPromedioClteGenero($arrayData);
+                                            ->getPromedioClteGenero($arrayParametros);
             if(!empty($arrayData["error"]))
             {
                 throw new \Exception($arrayData["error"]);
@@ -110,12 +111,12 @@ class InfoClienteEncuestaController extends AbstractController
     public function getTotalEncuesta(Request $objRequest)
     {
         $arrayRequest         = json_decode($objRequest->getContent(),true);
-        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
-        $strBanderaSemanal    = isset($arrayData["strBanderaSemanal"]) && !empty($arrayData["strBanderaSemanal"]) ? $arrayData["strBanderaSemanal"]:"NO";
-        $strBanderaMensual    = isset($arrayData["strBanderaMensual"]) && !empty($arrayData["strBanderaMensual"]) ? $arrayData["strBanderaMensual"]:"NO";
-        $strBanderaSemestral  = isset($arrayData["strBanderaSemestral"]) && !empty($arrayData["strBanderaSemestral"]) ? $arrayData["strBanderaSemestral"]:"NO";
-        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
-        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $strBanderaSemanal    = isset($arrayParametros["strBanderaSemanal"]) && !empty($arrayParametros["strBanderaSemanal"]) ? $arrayParametros["strBanderaSemanal"]:"NO";
+        $strBanderaMensual    = isset($arrayParametros["strBanderaMensual"]) && !empty($arrayParametros["strBanderaMensual"]) ? $arrayParametros["strBanderaMensual"]:"NO";
+        $strBanderaSemestral  = isset($arrayParametros["strBanderaSemestral"]) && !empty($arrayParametros["strBanderaSemestral"]) ? $arrayParametros["strBanderaSemestral"]:"NO";
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $objResponse          = new Response;
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
@@ -147,7 +148,7 @@ class InfoClienteEncuestaController extends AbstractController
                             $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
                             if(!empty($intIdEmpresa))
                             {
-                                $arrayData["intIdEmpresa"] = $intIdEmpresa;
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
                             }
                         }
                     }
@@ -156,17 +157,17 @@ class InfoClienteEncuestaController extends AbstractController
             if($strBanderaSemanal=="SI")
             {
                 $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                                 ->getTotalEncuestaSemanal($arrayData);
+                                                 ->getTotalEncuestaSemanal($arrayParametros);
             }
             elseif($strBanderaMensual=="SI")
             {
                 $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                                 ->getTotalEncuestaMensual($arrayData);
+                                                 ->getTotalEncuestaMensual($arrayParametros);
             }
             elseif($strBanderaSemestral=="SI")
             {
                 $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                                 ->getTotalEncuestaSemestral($arrayData);
+                                                 ->getTotalEncuestaSemestral($arrayParametros);
             }
             if(!empty($arrayData["error"]))
             {
@@ -186,6 +187,294 @@ class InfoClienteEncuestaController extends AbstractController
                                                    "arrayData"  => isset($arrayData["resultados"]) && 
                                                                          !empty($arrayData["resultados"]) ? 
                                                                          $arrayData["resultados"]:[],
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiWeb/getResultadoProEncuesta")
+     * 
+     * Documentación para la función 'getResultadoProEncuesta'.
+     *
+     * Función que permite mostrar el promedio de encuestas.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 05-03-2023
+     *
+     */
+    public function getResultadoProEncuesta(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(!empty(isset($arrayParametros["strEdad"]) && !empty($arrayParametros["strEdad"])))
+            {
+                $arrayEdad = explode("(", $arrayParametros["strEdad"]);
+                if(is_array($arrayEdad))
+                {
+                    $arrayParametros["strEdad"] = trim($arrayEdad[0]);
+                }
+            }
+            if(!empty(isset($arrayParametros["strHorario"]) && !empty($arrayParametros["strHorario"])))
+            {
+                $arrayHorario = explode("(", $arrayParametros["strHorario"]);
+                if(is_array($arrayHorario))
+                {
+                    $arrayParametros["strHorario"] = trim($arrayHorario[0]);
+                }
+            }
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                            ->getResultadoProEncuesta($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => isset($arrayData["resultados"]) && 
+                                                                         !empty($arrayData["resultados"]) ? 
+                                                                         $arrayData:[],
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiWeb/getResultadoProPregunta")
+     * 
+     * Documentación para la función 'getResultadoProPregunta'.
+     *
+     * Función que permite mostrar el promedio de preguntas.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 05-03-2023
+     *
+     */
+    public function getResultadoProPregunta(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(!empty(isset($arrayParametros["strEdad"]) && !empty($arrayParametros["strEdad"])))
+            {
+                $arrayEdad = explode("(", $arrayParametros["strEdad"]);
+                if(is_array($arrayEdad))
+                {
+                    $arrayParametros["strEdad"] = trim($arrayEdad[0]);
+                }
+            }
+            if(!empty(isset($arrayParametros["strHorario"]) && !empty($arrayParametros["strHorario"])))
+            {
+                $arrayHorario = explode("(", $arrayParametros["strHorario"]);
+                if(is_array($arrayHorario))
+                {
+                    $arrayParametros["strHorario"] = trim($arrayHorario[0]);
+                }
+            }
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                             ->getResultadoProPregunta($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => isset($arrayData["resultados"]) && 
+                                                                         !empty($arrayData["resultados"]) ? 
+                                                                         $arrayData:[],
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiWeb/getResultadoProIPN")
+     * 
+     * Documentación para la función 'getResultadoProIPN'.
+     *
+     * Función que permite mostrar el promedio de preguntas.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 05-03-2023
+     *
+     */
+    public function getResultadoProIPN(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(!empty(isset($arrayParametros["strEdad"]) && !empty($arrayParametros["strEdad"])))
+            {
+                $arrayEdad = explode("(", $arrayParametros["strEdad"]);
+                if(is_array($arrayEdad))
+                {
+                    $arrayParametros["strEdad"] = trim($arrayEdad[0]);
+                }
+            }
+            if(!empty(isset($arrayParametros["strHorario"]) && !empty($arrayParametros["strHorario"])))
+            {
+                $arrayHorario = explode("(", $arrayParametros["strHorario"]);
+                if(is_array($arrayHorario))
+                {
+                    $arrayParametros["strHorario"] = trim($arrayHorario[0]);
+                }
+            }
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                             ->getResultadoProIPN($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => isset($arrayData["resultados"]) && 
+                                                                         !empty($arrayData["resultados"]) ? 
+                                                                         $arrayData:[],
                                                    "strMensaje" => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;

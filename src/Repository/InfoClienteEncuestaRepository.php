@@ -636,4 +636,106 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $arrayRespuesta['error'] = $strMensajeError;
         return $arrayRespuesta;
     }
+
+    /**
+     * Documentación para la función "getDataEncuesta".
+     *
+     * Función encargada de retornar las respuestas de los clientes según los parámetros recibidos.
+     * 
+     * @author Kevin Baque
+     * @version 1.0 03-04-2023
+     *
+     * @return array  $arrayRespuesta
+     * 
+     */    
+    public function getDataEncuesta($arrayParametros)
+    {
+        $intIdCltEncuesta   = $arrayParametros['intIdCltEncuesta'] ? $arrayParametros['intIdCltEncuesta']:'';
+        $strEstado          = $arrayParametros['strEstado'] ? $arrayParametros['strEstado']:array('ACTIVO','INACTIVO','ELIMINADO');
+        $intMes             = $arrayParametros['intMes'] ? $arrayParametros['intMes']:'';
+        $intAnio            = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
+        $intIdRestaurante   = $arrayParametros['intIdRestaurante'] ? $arrayParametros['intIdRestaurante']:'';
+        $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
+        $arrayRespuesta     = array();
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        try
+        {
+            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,
+                                (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
+                                (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
+                                (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
+                                    FROM INFO_RESPUESTA IR
+                                    INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
+                                    INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
+                                    WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
+                                    AND IOR.TIPO_RESPUESTA = 'CERRADA'
+                                    AND IOR.VALOR           = '5'
+                                ) AS PROMEDIO,
+                                (
+                                SELECT 'SI' AS ES_MENOR_3
+                                    FROM INFO_RESPUESTA IR
+                                        INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
+                                        INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
+                                    WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
+                                        AND IR.RESPUESTA<=3
+                                        AND IOR.TIPO_RESPUESTA = 'CERRADA'
+                                    LIMIT   1
+                                )ES_MENOR_3,
+                                (SELECT IR.RESPUESTA  AS COMENTARIO
+                                    FROM INFO_RESPUESTA IR
+                                    INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
+                                    INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
+                                    WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
+                                    AND IOR.TIPO_RESPUESTA = 'ABIERTA'
+                                    AND IOR.DESCRIPCION = 'Comentario'
+                                ) AS COMENTARIO ";
+            $strFrom        = " FROM INFO_CLIENTE_ENCUESTA A 
+                                INNER JOIN INFO_ENCUESTA D  ON A.ENCUESTA_ID = D.ID_ENCUESTA
+                                INNER JOIN INFO_AREA IAR         ON IAR.ID_AREA         =  D.AREA_ID
+                                INNER JOIN INFO_SUCURSAL SUB_ISU         ON SUB_ISU.ID_SUCURSAL         =  IAR.SUCURSAL_ID 
+                                INNER JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=SUB_ISU.EMPRESA_ID ";
+            $strWhere       = "WHERE 
+                                EXTRACT(YEAR FROM A.FE_CREACION ) = :intAnio 
+                                AND A.ESTADO in ('ACTIVO','PENDIENTE','ELIMINADO')
+                                AND EXTRACT(MONTH FROM A.FE_CREACION ) = :intMes ";
+            if(!empty($intIdSucursal))
+            {
+                $strWhere   .= " AND SUB_ISU.ID_SUCURSAL = :intIdSucursal ";
+                $objQuery->setParameter("intIdSucursal", $intIdSucursal);
+            }
+            $strOrderBy     = " ORDER BY A.FE_CREACION DESC ";
+            $objQuery->setParameter("intMes", $intMes);
+            $objQuery->setParameter("intAnio", $intAnio);
+            $objQuery->setParameter("intIdUsuario", $intIdUsuario);
+            if(!empty($intIdCltEncuesta))
+            {
+                $strWhere .= " AND A.ID_CLT_ENCUESTA = :intIdCltEncuesta ";
+                $objQuery->setParameter("intIdCltEncuesta",$intIdCltEncuesta);
+            }
+            $objRsmBuilder->addScalarResult('FE_CREACION', 'strFeCreacion', 'string');
+            $objRsmBuilder->addScalarResult('CLIENTE_ID', 'intIdCliente', 'integer');
+            $objRsmBuilder->addScalarResult('TITULO', 'strTitulo', 'string');
+            $objRsmBuilder->addScalarResult('ESTADO', 'strEstado', 'string');
+            $objRsmBuilder->addScalarResult('ID_CLT_ENCUESTA', 'intIdCltEncuesta', 'string');
+            $objRsmBuilder->addScalarResult('NOMBRE_CLIENTE', 'strNombreClt', 'string');
+            $objRsmBuilder->addScalarResult('NOMBRE', 'strSucursal', 'string');
+            $objRsmBuilder->addScalarResult('CORREO_CLIENTE', 'strCorreoClt', 'string');
+            $objRsmBuilder->addScalarResult('PROMEDIO', 'strPromedio', 'string');
+            $objRsmBuilder->addScalarResult('COMENTARIO', 'strComentario', 'string');
+            $objRsmBuilder->addScalarResult('ES_MENOR_3', 'strEsmenor3', 'string');
+            $strSql       = $strSelect.$strFrom.$strWhere.$strOrderBy;
+            $objQuery->setSQL($strSql);
+            $arrayRespuesta['resultados'] = $objQuery->getResult();
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayRespuesta['error'] = $strMensajeError;
+        return $arrayRespuesta;
+    }
+    
 }

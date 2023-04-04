@@ -146,4 +146,53 @@ class InfoRespuestaController extends AbstractController
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }
+
+
+    /**
+     * @Rest\Post("/apiWeb/getRespuesta")
+     * 
+     * Documentación para la función 'getRespuesta'.
+     *
+     * Función que permite mostrar las respuestas.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 05-03-2023
+     *
+     */
+    public function getRespuesta(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            $arrayData = $this->getDoctrine()->getRepository(InfoRespuesta::class)
+                                             ->getRespuesta($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => isset($arrayData["resultados"]) && 
+                                                                         !empty($arrayData["resultados"]) ? 
+                                                                         $arrayData:[],
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
 }

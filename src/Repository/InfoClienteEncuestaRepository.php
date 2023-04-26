@@ -654,7 +654,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strEstado          = $arrayParametros['strEstado'] ? $arrayParametros['strEstado']:array('ACTIVO','INACTIVO','ELIMINADO');
         $intMes             = $arrayParametros['intMes'] ? $arrayParametros['intMes']:'';
         $intAnio            = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
-        $intIdRestaurante   = $arrayParametros['intIdRestaurante'] ? $arrayParametros['intIdRestaurante']:'';
+        $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
         $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
         $arrayRespuesta     = array();
@@ -691,6 +691,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
                                     AND IOR.TIPO_RESPUESTA = 'ABIERTA'
                                     AND IOR.DESCRIPCION = 'Comentario'
+                                    AND IR.RESPUESTA IS NOT NULL
+                                    LIMIT   1
                                 ) AS COMENTARIO ";
             $strFrom        = " FROM INFO_CLIENTE_ENCUESTA A 
                                 INNER JOIN INFO_ENCUESTA D  ON A.ENCUESTA_ID = D.ID_ENCUESTA
@@ -705,6 +707,11 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere   .= " AND SUB_ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $intIdSucursal);
+            }
+            if(!empty($intIdEmpresa))
+            {
+                $strWhere   .= " AND IEM.ID_EMPRESA = :intIdEmpresa ";
+                $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
             }
             $strOrderBy     = " ORDER BY A.FE_CREACION DESC ";
             $objQuery->setParameter("intMes", $intMes);
@@ -737,5 +744,55 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $arrayRespuesta['error'] = $strMensajeError;
         return $arrayRespuesta;
     }
-    
+
+    /**
+     * Documentación para la función 'getClienteEncuestaRepetida'
+     * Función encargada de retornar si la encuenta enviada existe.
+     * 
+     * @author Kevin Baque
+     * @version 1.0 25-04-2023
+     * 
+     * @return array  $arrayCltEncuesta
+     * 
+     */    
+    public function getClienteEncuestaRepetida($arrayParametros)
+    {
+        $intClienteId       = isset($arrayParametros["intClienteId"]) && !empty($arrayParametros["intClienteId"]) ? $arrayParametros["intClienteId"]:"";
+        $intSucursalId      = isset($arrayParametros["intSucursalId"]) && !empty($arrayParametros["intSucursalId"]) ? $arrayParametros["intSucursalId"]:"";
+        $intEncuestaId      = isset($arrayParametros["intEncuestaId"]) && !empty($arrayParametros["intEncuestaId"]) ? $arrayParametros["intEncuestaId"]:"";
+        $strFecha           = isset($arrayParametros["strFecha"]) && !empty($arrayParametros["strFecha"]) ? $arrayParametros["strFecha"]:"";
+        $strEstado          = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:"PENDIENTE";
+        $arrayCltEncuesta   = array();
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        try
+        {
+            $strSelect      = "SELECT ice.ID_CLT_ENCUESTA ";
+            $strFrom        = "FROM INFO_CLIENTE_ENCUESTA ice 
+                                JOIN INFO_ENCUESTA ie ON ie.ID_ENCUESTA=ice.ENCUESTA_ID
+                                JOIN INFO_AREA ia ON ia.ID_AREA=ie.AREA_ID
+                                AND ia.SUCURSAL_ID=:IDSUCURSAL ";
+            $strWhere       = "WHERE ice.CLIENTE_ID = :IDCLIENTE ".
+                                     " AND ice.ENCUESTA_ID = :IDENCUESTA ".
+                                     " AND ice.ESTADO = :ESTADO ".
+                                     " AND DATE(ice.FE_CREACION) = :FECHA ";
+            $objQuery->setParameter("IDSUCURSAL", $intSucursalId);
+            $objQuery->setParameter("IDCLIENTE", $intClienteId);
+            $objQuery->setParameter("IDENCUESTA", $intEncuestaId);
+            $objQuery->setParameter("ESTADO", $strEstado);
+            $objQuery->setParameter("FECHA", $strFecha);
+            $objRsmBuilder->addScalarResult('ID_CLT_ENCUESTA', 'ID_ENCUESTA', 'string');
+            $strSql       = $strSelect.$strFrom.$strWhere;
+            $objQuery->setSQL($strSql);
+            $arrayCltEncuesta['resultados'] = $objQuery->getResult();
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayCltEncuesta['error'] = $strMensajeError;
+        return $arrayCltEncuesta;
+    }
+
 }

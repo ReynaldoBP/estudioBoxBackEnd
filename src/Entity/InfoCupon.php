@@ -2,39 +2,46 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoSucursalRepository;
+use App\Repository\InfoCuponRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoSucursal
- * @ORM\Table(name="INFO_SUCURSAL")
- * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
+ * InfoCupon
+ * @ORM\Table(name="INFO_CUPON")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoCuponRepository")
  */
-class InfoSucursal
+class InfoCupon
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_SUCURSAL", type="integer")
+     * @ORM\Column(name="ID_CUPON", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoEmpresa
+    * @var AdmiTipoCupon
     *
-    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
+    * @ORM\ManyToOne(targetEntity="AdmiTipoCupon")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
+    * @ORM\JoinColumn(name="TIPO_CUPON_ID", referencedColumnName="ID_TIPO_CUPON")
     * })
     */
-    private $EMPRESA_ID;
+    private $TIPO_CUPON_ID;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=100)
      */
-    private $NOMBRE;
+    private $CUPON;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="DIA_VIGENTE", type="integer", nullable=true)
+     */
+    private $DIA_VIGENTE;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -71,37 +78,49 @@ class InfoSucursal
     }
 
     /**
-     * Get EMPRESA_ID
+     * Set TIPOCUPONID
      *
-     * @return \App\Entity\InfoEmpresa
+     * @param \App\Entity\AdmiTipoCupon $TIPOCUPONID
+     *
+     * @return InfoCupon
      */
-    public function getEMPRESAID()
+    public function setTIPOCUPONID(\App\Entity\AdmiTipoCupon $TIPOCUPONID = null)
     {
-        return $this->EMPRESA_ID;
-    }
-
-    /**
-     * Set setEMPRESAID
-     *
-     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
-     *
-     * @return InfoSucursal
-     */
-    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
-    {
-        $this->EMPRESA_ID = $EMPRESA_ID;
+        $this->TIPO_CUPON_ID = $TIPOCUPONID;
 
         return $this;
     }
 
-    public function getNOMBRE(): ?string
+    /**
+     * Get TIPOCUPONID
+     *
+     * @return \App\Entity\AdmiTipoCupon
+     */
+    public function getTIPOCUPONID()
     {
-        return $this->NOMBRE;
+        return $this->TIPO_CUPON_ID;
     }
 
-    public function setNOMBRE(string $NOMBRE): self
+    public function getCUPON(): ?string
     {
-        $this->NOMBRE = $NOMBRE;
+        return $this->CUPON;
+    }
+
+    public function setCUPON(string $CUPON): self
+    {
+        $this->CUPON = $CUPON;
+
+        return $this;
+    }
+
+    public function getDIAVIGENTE(): ?int
+    {
+        return $this->DIA_VIGENTE;
+    }
+
+    public function setDIAVIGENTE(int $DIA_VIGENTE): self
+    {
+        $this->DIA_VIGENTE = $DIA_VIGENTE;
 
         return $this;
     }

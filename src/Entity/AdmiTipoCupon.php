@@ -2,39 +2,29 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoSucursalRepository;
+use App\Repository\AdmiTipoCuponRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoSucursal
- * @ORM\Table(name="INFO_SUCURSAL")
- * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
+ * AdmiTipoCupon
+ * @ORM\Table(name="ADMI_TIPO_CUPON")
+ * @ORM\Entity(repositoryClass="App\Repository\AdmiTipoCuponRepository")
  */
-class InfoSucursal
+class AdmiTipoCupon
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_SUCURSAL", type="integer")
+     * @ORM\Column(name="ID_TIPO_CUPON", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoEmpresa
-    *
-    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
-    * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
-    * })
-    */
-    private $EMPRESA_ID;
-
-    /**
      * @ORM\Column(type="string", length=255)
      */
-    private $NOMBRE;
+    private $DESCRIPCION;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -70,38 +60,14 @@ class InfoSucursal
         return $this->id;
     }
 
-    /**
-     * Get EMPRESA_ID
-     *
-     * @return \App\Entity\InfoEmpresa
-     */
-    public function getEMPRESAID()
+    public function getDESCRIPCION(): ?string
     {
-        return $this->EMPRESA_ID;
+        return $this->DESCRIPCION;
     }
 
-    /**
-     * Set setEMPRESAID
-     *
-     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
-     *
-     * @return InfoSucursal
-     */
-    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
+    public function setDESCRIPCION(string $DESCRIPCION): self
     {
-        $this->EMPRESA_ID = $EMPRESA_ID;
-
-        return $this;
-    }
-
-    public function getNOMBRE(): ?string
-    {
-        return $this->NOMBRE;
-    }
-
-    public function setNOMBRE(string $NOMBRE): self
-    {
-        $this->NOMBRE = $NOMBRE;
+        $this->DESCRIPCION = $DESCRIPCION;
 
         return $this;
     }

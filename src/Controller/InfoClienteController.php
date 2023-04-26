@@ -213,6 +213,7 @@ class InfoClienteController extends AbstractController
         $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $strBanderaContador   = isset($arrayData["strBanderaContador"]) && !empty($arrayData["strBanderaContador"]) ? $arrayData["strBanderaContador"]:"NO";
         $strBanderaEdad       = isset($arrayData["strBanderaEdad"]) && !empty($arrayData["strBanderaEdad"]) ? $arrayData["strBanderaEdad"]:"NO";
+        $strListarCltCupon    = isset($arrayData["strListarCltCupon"]) && !empty($arrayData["strListarCltCupon"]) ? $arrayData["strListarCltCupon"]:"NO";
         $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
         $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
         $objResponse          = new Response;
@@ -259,6 +260,10 @@ class InfoClienteController extends AbstractController
             elseif($strBanderaEdad=="SI")
             {
                 $arrayData = $this->getDoctrine()->getRepository(InfoCliente::class)->getTotalClientePorEdad($arrayData);
+            }
+            elseif($strListarCltCupon=="SI")
+            {
+                $arrayData = $this->getDoctrine()->getRepository(InfoCliente::class)->getClientePorCuponCriterio($arrayData);
             }
             if(!empty($arrayData["error"]))
             {

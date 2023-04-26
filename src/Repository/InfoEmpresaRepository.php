@@ -13,6 +13,9 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque Puya
      * @version 1.0 03-03-2023
      * 
+     * @author Kevin Baque Puya
+     * @version 1.0 26-04-2023 - Filtro para retornar las empresas asociadas a los clientes con sucursal.
+     * 
      * @return array  $arrayResultado
      * 
      */
@@ -45,6 +48,18 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere .= " AND IE.ID_EMPRESA = :intIdEmpresa ";
                 $objQuery->setParameter("intIdEmpresa", $arrayParametros["intIdEmpresa"]);
+            }
+            if(isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]))
+            {
+                $strFrom  .= " JOIN INFO_USUARIO_EMPRESA IUE ON IUE.EMPRESA_ID=IE.ID_EMPRESA ";
+                $strWhere .= " AND IUE.USUARIO_ID = :intIdUsuario ";
+                $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+            }
+            if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]))
+            {
+                $strFrom  .= " JOIN INFO_SUCURSAL ISU ON ISU.EMPRESA_ID=IE.ID_EMPRESA ";
+                $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
+                $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
             }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {

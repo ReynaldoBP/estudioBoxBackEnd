@@ -40,6 +40,7 @@ class InfoRespuestaRepository extends \Doctrine\ORM\EntityRepository
                                 JOIN INFO_PREGUNTA          IPR  ON IPR.ID_PREGUNTA=IRE.PREGUNTA_ID
                                 JOIN ADMI_TIPO_OPCION_RESPUESTA  IOR  ON IOR.ID_TIPO_OPCION_RESPUESTA=IPR.TIPO_OPCION_RESPUESTA_ID ";
             $strWhere       = "WHERE IRE.ESTADO in (:strEstado) ";
+            $strOrderBy     = " Order by DESCRIPCION_PREGUNTA ASC ";
             $objQuery->setParameter("strEstado",$strEstado);
             $objQueryCount->setParameter("strEstado",$strEstado);
             if(!empty($intIdCltEncuesta))
@@ -64,7 +65,7 @@ class InfoRespuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('RESPUESTA', 'RESPUESTA', 'string');
             $objRsmBuilder->addScalarResult('ESTADO_RESPUESTA', 'ESTADO_RESPUESTA', 'string');
             $objRsmBuilderCount->addScalarResult('CANTIDAD', 'Cantidad', 'integer');
-            $strSql       = $strSelect.$strFrom.$strWhere;
+            $strSql       = $strSelect.$strFrom.$strWhere.$strOrderBy;
             $objQuery->setSQL($strSql);
             $strSqlCount  = $strSelectCount.$strFrom.$strWhere;
             $objQueryCount->setSQL($strSqlCount);

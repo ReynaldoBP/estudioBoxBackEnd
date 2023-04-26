@@ -198,4 +198,80 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
         return $arrayCltEncuesta;
     }
 
+    /**
+     * Documentación para la función 'getClientePorCuponCriterio'
+     * 
+     * Método encargado de retornar todos los clientes con cupones canjeados automáticos según los parámetros recibidos.
+     * 
+     * @author Kevin Baque
+     * @version 1.0 25-04-2023
+     *
+     * @return array  $arrayCliente
+     * 
+     */
+    public function getClientePorCuponCriterio($arrayParametros)
+    {
+        $intIdEmpresa       = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $arrayCliente       = array();
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        $strOrder           = ' ORDER BY ICU.FE_CREACION DESC ';
+        try
+        {
+            $strSelect      = "SELECT IC.ID_CLIENTE,
+                                IC.IDENTIFICACION,
+                                IC.NOMBRE AS NOMBRE_COMPLETO,
+                                IC.CORREO,
+                                ICU.CUPON,
+                                IPR.DESCRIPCION AS PROMOCION,
+                                ICPH.ESTADO,
+                                ICU.FE_CREACION,
+                                DATE_FORMAT(ICPC.FE_VIGENCIA,'%Y-%m-%d') AS FE_VIGENCIA ";
+            $strFrom        = " FROM INFO_CLIENTE IC
+                                JOIN INFO_CUPON_PROMOCION_CLT         ICPC ON ICPC.CLIENTE_ID=IC.ID_CLIENTE
+                                JOIN INFO_CUPON                       ICU ON ICPC.CUPON_ID = ICU.ID_CUPON
+                                JOIN ADMI_TIPO_CUPON                  ATC ON ATC.ID_TIPO_CUPON = ICU.TIPO_CUPON_ID
+                                                            AND ATC.ESTADO = 'ACTIVO'
+                                                            AND ATC.DESCRIPCION = 'ENCUESTA'
+                                JOIN INFO_CUPON_HISTORIAL             ICH ON ICH.CUPON_ID = ICU.ID_CUPON
+                                                                    AND ICH.ESTADO = 'CANJEADO'
+                                JOIN INFO_PROMOCION                   IPR ON IPR.ID_PROMOCION = ICPC.PROMOCION_ID
+                                                            AND IPR.ESTADO = 'ACTIVO'
+                                JOIN ADMI_TIPO_PROMOCION              ATP ON ATP.ID_TIPO_PROMOCION = IPR.TIPO_PROMOCION_ID
+                                                                AND ATP.DESCRIPCION = 'ENCUESTA'
+                                                                AND ATP.ESTADO = 'ACTIVO'
+                                JOIN INFO_CLIENTE_PROMOCION_HISTORIAL ICPH ON ICPH.PROMOCION_ID = IPR.ID_PROMOCION
+                                                                                AND ICPC.CLIENTE_ID = ICPH.CLIENTE_ID ";
+            $strWhere       = " WHERE IC.ESTADO IN ( 'ACTIVO', 'INACTIVO', 'AUTOMATICO')
+                                AND ICPC.ESTADO = 'CANJEADO'
+                                AND ICU.ESTADO = 'CANJEADO' ";
+            $strGroup       = " GROUP BY IC.ID_CLIENTE,IC.IDENTIFICACION,NOMBRE_COMPLETO,
+                                IC.CORREO,ICU.CUPON,PROMOCION,ICPH.ESTADO,ICU.FE_CREACION,ICPC.FE_VIGENCIA ";
+            if(!empty($intIdEmpresa))
+            {
+                $strWhere .= " AND ICH.EMPRESA_ID = :intIdEmpresa ";
+                $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
+            }
+            $objRsmBuilder->addScalarResult('ID_CLIENTE', 'ID_CLIENTE', 'string');
+            $objRsmBuilder->addScalarResult('IDENTIFICACION', 'IDENTIFICACION', 'string');
+            $objRsmBuilder->addScalarResult('NOMBRE_COMPLETO', 'NOMBRE_COMPLETO', 'string');
+            $objRsmBuilder->addScalarResult('CORREO', 'CORREO', 'string');
+            $objRsmBuilder->addScalarResult('CUPON', 'CUPON', 'string');
+            $objRsmBuilder->addScalarResult('PROMOCION', 'PROMOCION', 'string');
+            $objRsmBuilder->addScalarResult('ESTADO', 'ESTADO', 'string');
+            $objRsmBuilder->addScalarResult('FE_CREACION', 'FE_CREACION', 'string');
+            $objRsmBuilder->addScalarResult('FE_VIGENCIA', 'FE_VIGENCIA', 'string');
+            $strSql       = $strSelect.$strFrom.$strWhere.$strGroup.$strOrder;
+            $objQuery->setSQL($strSql);
+            $arrayCliente['resultados'] = $objQuery->getResult();
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayCliente['error'] = $strMensajeError;
+        return $arrayCliente;
+    }
+
 }

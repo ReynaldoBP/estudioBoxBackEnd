@@ -2,24 +2,34 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoSucursalRepository;
+use App\Repository\InfoPromocionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoSucursal
- * @ORM\Table(name="INFO_SUCURSAL")
- * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
+ * InfoPromocion
+ * @ORM\Table(name="INFO_PROMOCION")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoPromocionRepository")
  */
-class InfoSucursal
+class InfoPromocion
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_SUCURSAL", type="integer")
+     * @ORM\Column(name="ID_PROMOCION", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
+
+    /**
+    * @var AdmiTipoPromocion
+    *
+    * @ORM\ManyToOne(targetEntity="AdmiTipoPromocion")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="TIPO_PROMOCION_ID", referencedColumnName="ID_TIPO_PROMOCION")
+    * })
+    */
+    private $TIPO_PROMOCION_ID;
 
     /**
     * @var InfoEmpresa
@@ -34,7 +44,14 @@ class InfoSucursal
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $NOMBRE;
+    private $DESCRIPCION;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="CANT_DIAS_VIGENCIA", type="integer", nullable=true)
+     */
+    private $CANTDIASVIGENCIA;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -71,7 +88,45 @@ class InfoSucursal
     }
 
     /**
-     * Get EMPRESA_ID
+     * Set TIPOPROMOCIONID
+     *
+     * @param \App\Entity\AdmiTipoPromocion $TIPOPROMOCIONID
+     *
+     * @return InfoPromocion
+     */
+    public function setTIPOPROMOCIONID(\App\Entity\AdmiTipoPromocion $TIPOPROMOCIONID = null)
+    {
+        $this->TIPO_PROMOCION_ID = $TIPOPROMOCIONID;
+
+        return $this;
+    }
+
+    /**
+     * Get TIPOPROMOCIONID
+     *
+     * @return \App\Entity\AdmiTipoPromocion
+     */
+    public function getTIPOPROMOCIONID()
+    {
+        return $this->TIPO_PROMOCION_ID;
+    }
+
+    /**
+     * Set EMPRESAID
+     *
+     * @param \App\Entity\InfoEmpresa $EMPRESAID
+     *
+     * @return InfoPromocion
+     */
+    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESAID = null)
+    {
+        $this->EMPRESA_ID = $EMPRESAID;
+
+        return $this;
+    }
+
+    /**
+     * Get EMPRESAID
      *
      * @return \App\Entity\InfoEmpresa
      */
@@ -80,28 +135,26 @@ class InfoSucursal
         return $this->EMPRESA_ID;
     }
 
-    /**
-     * Set setEMPRESAID
-     *
-     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
-     *
-     * @return InfoSucursal
-     */
-    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
+    public function getDESCRIPCION(): ?string
     {
-        $this->EMPRESA_ID = $EMPRESA_ID;
+        return $this->DESCRIPCION;
+    }
+
+    public function setDESCRIPCION(string $DESCRIPCION): self
+    {
+        $this->DESCRIPCION = $DESCRIPCION;
 
         return $this;
     }
 
-    public function getNOMBRE(): ?string
+    public function getCANTDIASVIGENCIA(): ?int
     {
-        return $this->NOMBRE;
+        return $this->CANTDIASVIGENCIA;
     }
 
-    public function setNOMBRE(string $NOMBRE): self
+    public function setCANTDIASVIGENCIA(int $CANTDIASVIGENCIA): self
     {
-        $this->NOMBRE = $NOMBRE;
+        $this->CANTDIASVIGENCIA = $CANTDIASVIGENCIA;
 
         return $this;
     }

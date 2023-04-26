@@ -2,24 +2,44 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoSucursalRepository;
+use App\Repository\InfoCuponHistorialRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoSucursal
- * @ORM\Table(name="INFO_SUCURSAL")
- * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
+ * InfoCuponHistorial
+ * @ORM\Table(name="INFO_CUPON_HISTORIAL")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoCuponHistorialRepository")
  */
-class InfoSucursal
+class InfoCuponHistorial
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_SUCURSAL", type="integer")
+     * @ORM\Column(name="ID_CUPON_HISTORIAL", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
+
+    /**
+    * @var InfoCupon
+    *
+    * @ORM\ManyToOne(targetEntity="InfoCupon")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="CUPON_ID", referencedColumnName="ID_CUPON")
+    * })
+    */
+    private $CUPON_ID;
+
+    /**
+    * @var InfoCliente
+    *
+    * @ORM\ManyToOne(targetEntity="InfoCliente")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
+    * })
+    */
+    private $CLIENTE_ID;
 
     /**
     * @var InfoEmpresa
@@ -30,11 +50,6 @@ class InfoSucursal
     * })
     */
     private $EMPRESA_ID;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $NOMBRE;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -71,39 +86,75 @@ class InfoSucursal
     }
 
     /**
-     * Get EMPRESA_ID
+     * Set CUPONID
+     *
+     * @param \App\Entity\InfoCupon $CUPONID
+     *
+     * @return InfoCuponHistorial
+     */
+    public function setCUPONID(\App\Entity\InfoCupon $CUPONID = null)
+    {
+        $this->CUPON_ID = $CUPONID;
+
+        return $this;
+    }
+
+    /**
+     * Get CUPONID
+     *
+     * @return \App\Entity\InfoCupon
+     */
+    public function getCUPONID()
+    {
+        return $this->CUPON_ID;
+    }
+
+    /**
+     * Set CLIENTEID
+     *
+     * @param \App\Entity\InfoCliente $CLIENTEID
+     *
+     * @return InfoCuponHistorial
+     */
+    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTEID = null)
+    {
+        $this->CLIENTE_ID = $CLIENTEID;
+
+        return $this;
+    }
+
+    /**
+     * Get CLIENTEID
+     *
+     * @return \App\Entity\InfoCliente
+     */
+    public function getCLIENTEID()
+    {
+        return $this->CLIENTE_ID;
+    }
+
+    /**
+     * Set EMPRESAID
+     *
+     * @param \App\Entity\InfoEmpresa $EMPRESAID
+     *
+     * @return InfoCuponHistorial
+     */
+    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESAID = null)
+    {
+        $this->EMPRESA_ID = $EMPRESAID;
+
+        return $this;
+    }
+
+    /**
+     * Get EMPRESAID
      *
      * @return \App\Entity\InfoEmpresa
      */
     public function getEMPRESAID()
     {
         return $this->EMPRESA_ID;
-    }
-
-    /**
-     * Set setEMPRESAID
-     *
-     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
-     *
-     * @return InfoSucursal
-     */
-    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
-    {
-        $this->EMPRESA_ID = $EMPRESA_ID;
-
-        return $this;
-    }
-
-    public function getNOMBRE(): ?string
-    {
-        return $this->NOMBRE;
-    }
-
-    public function setNOMBRE(string $NOMBRE): self
-    {
-        $this->NOMBRE = $NOMBRE;
-
-        return $this;
     }
 
     public function getESTADO(): ?string

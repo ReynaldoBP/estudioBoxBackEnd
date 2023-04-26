@@ -2,39 +2,44 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoSucursalRepository;
+use App\Repository\InfoPromocionHistorialRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoSucursal
- * @ORM\Table(name="INFO_SUCURSAL")
- * @ORM\Entity(repositoryClass="App\Repository\InfoSucursalRepository")
+ * InfoPromocionHistorial
+ * @ORM\Table(name="INFO_CLIENTE_PROMOCION_HISTORIAL")
+ * @ORM\Entity(repositoryClass="App\Repository\InfoPromocionHistorialRepository")
  */
-class InfoSucursal
+class InfoPromocionHistorial
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_SUCURSAL", type="integer")
+     * @ORM\Column(name="ID_CLIENTE_PUNTO_HISTORIAL", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
-    * @var InfoEmpresa
+    * @var InfoPromocion
     *
-    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
+    * @ORM\ManyToOne(targetEntity="InfoPromocion")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
+    * @ORM\JoinColumn(name="PROMOCION_ID", referencedColumnName="ID_PROMOCION")
     * })
     */
-    private $EMPRESA_ID;
+    private $PROMOCION_ID;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $NOMBRE;
+    * @var InfoCliente
+    *
+    * @ORM\ManyToOne(targetEntity="InfoCliente")
+    * @ORM\JoinColumns({
+    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
+    * })
+    */
+    private $CLIENTE_ID;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -71,39 +76,51 @@ class InfoSucursal
     }
 
     /**
-     * Get EMPRESA_ID
+     * Set PROMOCIONID
      *
-     * @return \App\Entity\InfoEmpresa
+     * @param \App\Entity\InfoPromocion $PROMOCIONID
+     *
+     * @return InfoPromocionHistorial
      */
-    public function getEMPRESAID()
+    public function setPROMOCIONID(\App\Entity\InfoPromocion $PROMOCIONID = null)
     {
-        return $this->EMPRESA_ID;
+        $this->PROMOCION_ID = $PROMOCIONID;
+
+        return $this;
     }
 
     /**
-     * Set setEMPRESAID
+     * Get PROMOCIONID
      *
-     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
-     *
-     * @return InfoSucursal
+     * @return \App\Entity\InfoPromocion
      */
-    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
+    public function getPROMOCIONID()
     {
-        $this->EMPRESA_ID = $EMPRESA_ID;
+        return $this->PROMOCION_ID;
+    }
+
+    /**
+     * Set CLIENTEID
+     *
+     * @param \App\Entity\InfoCliente $CLIENTEID
+     *
+     * @return InfoPromocionHistorial
+     */
+    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTEID = null)
+    {
+        $this->CLIENTE_ID = $CLIENTEID;
 
         return $this;
     }
 
-    public function getNOMBRE(): ?string
+    /**
+     * Get CLIENTEID
+     *
+     * @return \App\Entity\InfoCliente
+     */
+    public function getCLIENTEID()
     {
-        return $this->NOMBRE;
-    }
-
-    public function setNOMBRE(string $NOMBRE): self
-    {
-        $this->NOMBRE = $NOMBRE;
-
-        return $this;
+        return $this->CLIENTE_ID;
     }
 
     public function getESTADO(): ?string

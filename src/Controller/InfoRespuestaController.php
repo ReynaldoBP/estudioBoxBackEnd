@@ -16,6 +16,16 @@ use App\Entity\InfoCliente;
 use App\Entity\InfoClienteEncuesta;
 use App\Entity\AdmiTipoOpcionRespuesta;
 use App\Entity\InfoEncuesta;
+use App\Entity\AdmiTipoPromocion;
+use App\Entity\InfoSucursal;
+use App\Entity\InfoArea;
+use App\Entity\InfoEmpresa;
+use App\Entity\InfoPromocion;
+use App\Entity\InfoCupon;
+use App\Entity\AdmiTipoCupon;
+use App\Entity\InfoCuponHistorial;
+use App\Entity\InfoCuponPromocionClt;
+use App\Entity\InfoPromocionHistorial;
 class InfoRespuestaController extends AbstractController
 {
     /**
@@ -27,6 +37,9 @@ class InfoRespuestaController extends AbstractController
      *
      * @author Kevin Baque Puya
      * @version 1.0 30-12-2022
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 23-04-2023 - Se agrega Lógica para crear cupones.
      *
      */
     public function createRespuesta(Request $objRequest)
@@ -101,6 +114,117 @@ class InfoRespuestaController extends AbstractController
             {
                 throw new \Exception("Estimado usuario por favor llene la encuesta.");
             }
+            //Obtenemos el tipo de promoción Encuesta
+            $objTipoPromocion = $this->getDoctrine()
+                                     ->getRepository(AdmiTipoPromocion::class)
+                                     ->findOneBy(array("DESCRIPCION"     =>"ENCUESTA",
+                                                       "ESTADO" =>'ACTIVO'));
+            if(!is_object($objTipoPromocion) || empty($objTipoPromocion))
+            {
+                throw new \Exception('No existe el tipo de promoción "Encuesta" enviado por parámetro.');
+            }
+            //Buscamos la empresa por medio de la encuesta.
+            $objArea = $this->getDoctrine()
+                            ->getRepository(InfoArea::class)
+                            ->find($objEncuesta->getAREAID()->getId());
+            if(!is_object($objArea) || empty($objArea))
+            {
+                throw new \Exception('No existe el area enviado por parámetro.');
+            }
+            $objSucursal = $this->getDoctrine()
+                            ->getRepository(InfoSucursal::class)
+                            ->find($objArea->getSUCURSALID()->getId());
+            if(!is_object($objSucursal) || empty($objSucursal))
+            {
+                throw new \Exception('No existe la sucursal enviado por parámetro.');
+            }
+            $objEmpresa = $this->getDoctrine()
+                            ->getRepository(InfoEmpresa::class)
+                            ->find($objSucursal->getEMPRESAID()->getId());
+            if(!is_object($objEmpresa) || empty($objEmpresa))
+            {
+                throw new \Exception('No existe la empresa enviado por parámetro.');
+            }
+            //Buscamos una promoción de tipo encuesta con la empresa.
+            $objPromocion = $this->getDoctrine()
+                                 ->getRepository(InfoPromocion::class)
+                                 ->findOneBy(array("ESTADO"            => "ACTIVO",
+                                                   "TIPO_PROMOCION_ID" => $objTipoPromocion->getId(),
+                                                   "EMPRESA_ID"        => $objEmpresa->getId()));
+            //En caso de que la persona encuestada, indique que si desea el cupón el restaurante 
+            //podrá redimir el cupón del encuestado, siempre y cuando el restaurante
+            //tenga una promoción de tipo "Encuesta"
+            if(!empty($strCorreo) && is_object($objPromocion))
+            {
+                error_log("Ingresa en nuevo flujo");
+                $strDescripcionPromocion = $objPromocion->getDESCRIPCION();
+                /*$arrayCltEncuesta  = $this->getDoctrine()
+                                          ->getRepository(InfoClienteEncuesta::class)
+                                          ->getClienteEncuestaRepetida(array('intClienteId'   => $entityCliente->getId(),
+                                                                             'intSucursalId'  => $objSucursal->getId(),
+                                                                             'intEncuestaId'  => $intIdEncuesta,
+                                                                             'strFecha'       => date('Y-m-d'),
+                                                                             'strEstado'      => "ACTIVO"));
+                if(is_array($arrayCltEncuesta) && !empty($arrayCltEncuesta['resultados']))
+                {
+                    throw new \Exception('Ya existe una encuesta con el mismo correo electrónico.');
+                }*/
+                //Creamos el cupón
+                $objTipoCupon = $this->getDoctrine()
+                                     ->getRepository(AdmiTipoCupon::class)
+                                     ->findOneBy(array("DESCRIPCION" => "ENCUESTA",
+                                                       "ESTADO"      => "ACTIVO"));
+                if(!is_object($objTipoCupon) || empty($objTipoCupon))
+                {
+                    throw new \Exception('No existe el tipo de cupón enviado por parámetro.');
+                }
+                $strDescCupon = substr(uniqid(),0,6);
+                $entityCupon = new InfoCupon();
+                $entityCupon->setCUPON($strDescCupon);
+                $entityCupon->setESTADO("CANJEADO");
+                $entityCupon->setTIPOCUPONID($objTipoCupon);
+                $entityCupon->setDIAVIGENTE(intval($objPromocion->getCANTDIASVIGENCIA()));
+                $entityCupon->setUSRCREACION($strUsrSesion);
+                $entityCupon->setFECREACION(new \DateTime('now'));
+                $em->persist($entityCupon);
+                $em->flush();
+                $strCupon = $entityCupon->getCUPON();
+                //Ingresamos todos los datos necesarios para poder redimir la promoción desde la web
+                $entityCuponHistorial = new InfoCuponHistorial();
+                $entityCuponHistorial->setESTADO("CANJEADO");
+                $entityCuponHistorial->setCUPONID($entityCupon);
+                $entityCuponHistorial->setCLIENTEID($entityCliente);
+                $entityCuponHistorial->setEMPRESAID($objEmpresa);
+                $entityCuponHistorial->setUSRCREACION($strUsrSesion);
+                $entityCuponHistorial->setFECREACION($objDatetimeActual);
+                $em->persist($entityCuponHistorial);
+                $em->flush();
+                $entityCuponPromocionClt = new InfoCuponPromocionClt();
+                $entityCuponPromocionClt->setPROMOCIONID($objPromocion);
+                $entityCuponPromocionClt->setCUPONID($entityCupon);
+                $entityCuponPromocionClt->setCLIENTEID($entityCliente);
+                $entityCuponPromocionClt->setESTADO("CANJEADO");
+                $objFechaVigencia     = $objDatetimeActual;
+                $objFechaVigencia->add(new \DateInterval("P".intval($entityCupon->getDIAVIGENTE())."D"));
+                $strFechaVigencia     = date_format($objFechaVigencia,"Y/m/d");
+                $entityCuponPromocionClt->setFEVIGENCIA($objFechaVigencia);
+                $entityCuponPromocionClt->setUSRCREACION($strUsrSesion);
+                $entityCuponPromocionClt->setFECREACION($objDatetimeActual);
+                $em->persist($entityCuponPromocionClt);
+                $em->flush();
+                $entityPromocionHist = new InfoPromocionHistorial();
+                $entityPromocionHist->setCLIENTEID($entityCliente);
+                $entityPromocionHist->setPROMOCIONID($objPromocion);
+                $entityPromocionHist->setESTADO("PENDIENTE");
+                $entityPromocionHist->setUSRCREACION($strUsrSesion);
+                $entityPromocionHist->setFECREACION($objDatetimeActual);
+                $em->persist($entityPromocionHist);
+                $em->flush();
+            }
+            else
+            {
+                error_log("No se cumplieron los parametros necesarios para ingresar en nuevo flujo");
+            }
             foreach ($arrayPregunta as $intIdPregunta => $strRespuesta) 
             {
                 $objPregunta = $this->getDoctrine()->getRepository(InfoPregunta::class)
@@ -130,7 +254,13 @@ class InfoRespuestaController extends AbstractController
                 $em->getConnection()->commit();
                 $em->getConnection()->close();
             }
-            $strMensaje = "Respuesta ingresada correctamente.";
+            $strMensaje = "Gracias por tu respuesta";
+            if(!empty($strCupon))
+            {
+                $strMensaje = "Promoción: ".$strDescripcionPromocion."\n".
+                              "Cupón: ".$strCupon."\n".
+                              "Válido hasta: ".$strFechaVigencia;
+            }
         }
         catch(\Exception $ex)
         {

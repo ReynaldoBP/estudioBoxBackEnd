@@ -560,4 +560,64 @@ class InfoClienteEncuestaController extends AbstractController
         return $objResponse;
     }
 
+    /**
+     * @Rest\Post("/apiWeb/editEncuestasRealizadas")
+     * 
+     * Documentación para la función 'editEncuestasRealizadas'.
+     *
+     * Función que permite editar el estado de la encuesta realizada.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 04-05-2023
+     *
+     */
+    public function editEncuestasRealizadas(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdCltEncuesta     = isset($arrayParametros["intIdCltEncuesta"]) && !empty($arrayParametros["intIdCltEncuesta"]) ? $arrayParametros["intIdCltEncuesta"]:"";
+        $strEstado            = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:"ELIMINADO";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            $em->getConnection()->beginTransaction();
+            $objClienteEncuesta = $this->getDoctrine()
+                                       ->getRepository(InfoClienteEncuesta::class)
+                                       ->find($intIdCltEncuesta);
+            if(!is_object($objClienteEncuesta) || empty($objClienteEncuesta))
+            {
+                throw new \Exception('Encuesta del cliente no existe.');
+            }
+            if(!empty($strEstado))
+            {
+                $objClienteEncuesta->setESTADO(strtoupper($strEstado));
+            }
+            $objClienteEncuesta->setUSRMODIFICACION($intIdUsuario);
+            $objClienteEncuesta->setFEMODIFICACION(new \DateTime('now'));
+            $em->persist($objClienteEncuesta);
+            $em->flush();
+            $strMensaje = 'Encuesta del cliente editado con éxito';
+            if ($em->getConnection()->isTransactionActive())
+            {
+                $em->getConnection()->commit();
+                $em->getConnection()->close();
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+
 }

@@ -275,6 +275,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     IE.ID_ENCUESTA ";
             $strFrom        = "FROM INFO_RESPUESTA IR
                                 INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
+                                                                     AND IP.ESTADO='ACTIVO'
                                 INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
                                 
                                 INNER JOIN INFO_CLIENTE_ENCUESTA ICE ON ICE.ID_CLT_ENCUESTA     = IR.CLT_ENCUESTA_ID

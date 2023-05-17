@@ -40,7 +40,7 @@ class InfoRespuestaRepository extends \Doctrine\ORM\EntityRepository
                                 JOIN INFO_PREGUNTA          IPR  ON IPR.ID_PREGUNTA=IRE.PREGUNTA_ID
                                 JOIN ADMI_TIPO_OPCION_RESPUESTA  IOR  ON IOR.ID_TIPO_OPCION_RESPUESTA=IPR.TIPO_OPCION_RESPUESTA_ID ";
             $strWhere       = "WHERE IRE.ESTADO in (:strEstado) ";
-            $strOrderBy     = " Order by DESCRIPCION_PREGUNTA ASC ";
+            $strOrderBy     = " Order by IPR.FE_CREACION ASC ";
             $objQuery->setParameter("strEstado",$strEstado);
             $objQueryCount->setParameter("strEstado",$strEstado);
             if(!empty($intIdCltEncuesta))

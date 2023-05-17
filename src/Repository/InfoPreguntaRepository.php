@@ -43,6 +43,11 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                                    IE.TITULO AS ENCUESTA,
                                    ATOR.TIPO_RESPUESTA AS TIPO_OPCION_RESPUESTA,
                                    ATOR.VALOR AS CANT_ESTRELLA, 
+                                   (
+                                        SELECT VALOR 
+                                        FROM INFO_OPCION_RESPUESTA 
+                                        WHERE PREGUNTA_ID=IP.ID_PREGUNTA AND TIPO_OPCION_RESPUESTA_ID=ATOR.ID_TIPO_OPCION_RESPUESTA
+                                   ) AS VALOR_DESPLEGABLE,
                                    IP.ESTADO,
                                    IP.USR_CREACION,
                                    IP.FE_CREACION,
@@ -71,6 +76,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("ENCUESTA", "strEncuesta", "string");
             $objRsmBuilder->addScalarResult("TIPO_OPCION_RESPUESTA", "strTipoOpcionRespuesta", "string");
             $objRsmBuilder->addScalarResult("CANT_ESTRELLA", "intCantidadEstrellas", "integer");
+            $objRsmBuilder->addScalarResult("VALOR_DESPLEGABLE", "strValorDesplegable", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
             $objRsmBuilder->addScalarResult("USR_CREACION", "strusrCreacion", "string");
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");

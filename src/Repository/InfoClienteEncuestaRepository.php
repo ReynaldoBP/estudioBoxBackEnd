@@ -365,7 +365,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                 AND ICE.ESTADO !='ELIMINADO' ";
             $strSql2         = $strSelect2.$strFrom2.$strWhere.$strGroupBy2;
             $objQuery2->setSQL($strSql2);
-            $arrayResultadoEnc                 = $objQuery2->getOneOrNullResult();
+            $arrayResultadoEnc                 = $objQuery2->getResult();
             $arrayRespuesta['intNumeroEncuesta'] = $arrayResultadoEnc['intNumeroEncuesta'];
         }
         catch(\Exception $ex)

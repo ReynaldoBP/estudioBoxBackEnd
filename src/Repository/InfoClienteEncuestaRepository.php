@@ -248,6 +248,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strHorario         = $arrayParametros['strHorario'] ? $arrayParametros['strHorario']:'';
         $strEdad            = $arrayParametros['strEdad'] ? $arrayParametros['strEdad']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
+        $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $arrayRespuesta     = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -301,11 +303,23 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                 AND IOR.VALOR           = '5'
                                 AND IE.ESTADO           = 'ACTIVO' AND ICE.ESTADO != 'ELIMINADO' ";
             $strGroupBy     = " GROUP BY PREGUNTA_ID ";
+            if(!empty($intIdEmpresa))
+            {
+                $strWhere  = " AND IRES.ID_EMPRESA = ".$intIdEmpresa." ";
+                $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
+                $objQuery2->setParameter("intIdEmpresa", $intIdEmpresa);
+            }
             if(!empty($intIdSucursal))
             {
                 $strWhere   .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $intIdSucursal);
                 $objQuery2->setParameter("intIdSucursal", $intIdSucursal);
+            }
+            if(!empty($intIdArea))
+            {
+                $strWhere   .= " AND IAR.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea", $intIdArea);
+                $objQuery2->setParameter("intIdArea", $intIdArea);
             }
             if(!empty($strFechaIni) && !empty($strFechaFin))
             { 
@@ -363,7 +377,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                 WHERE 
                                 IE.ESTADO           = 'ACTIVO' 
                                 AND ICE.ESTADO !='ELIMINADO' ";
-            $strSql2         = $strSelect2.$strFrom2.$strWhere.$strGroupBy2;
+            $strSql2         = $strSelect2.$strFrom2.$strWhere/*.$strGroupBy2*/;
             $objQuery2->setSQL($strSql2);
             $arrayResultadoEnc                 = $objQuery2->getOneOrNullResult();
             $arrayRespuesta['intNumeroEncuesta'] = $arrayResultadoEnc['intNumeroEncuesta'];
@@ -396,6 +410,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strEdad            = $arrayParametros['strEdad'] ? $arrayParametros['strEdad']:'';
         $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $arrayRespuesta     = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -437,6 +452,12 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IEM.ID_EMPRESA = :intIdEmpresa ";
                 $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
                 $objQuery2->setParameter("intIdEmpresa", $intIdEmpresa);
+            }
+            if(!empty($intIdArea))
+            {
+                $strWhere   .= " AND IAR.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea", $intIdArea);
+                $objQuery2->setParameter("intIdArea", $intIdArea);
             }
             if(!empty($intIdSucursal))
             {
@@ -538,6 +559,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strEdad            = $arrayParametros['strEdad'] ? $arrayParametros['strEdad']:'';
         $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $arrayRespuesta     = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -591,6 +613,11 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal";
                 $objQuery->setParameter("intIdSucursal", $intIdSucursal);
+            }
+            if(!empty($intIdArea))
+            {
+                $strWhere   .= " AND IAR.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea", $intIdArea);
             }
             if(!empty($strFechaIni) && !empty($strFechaFin))
             {
@@ -657,6 +684,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intAnio            = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
         $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
+        $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
         $arrayRespuesta     = array();
         $strMensajeError    = '';
@@ -664,7 +693,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         try
         {
-            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,
+            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
                                 (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
                                 (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
                                 (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
@@ -709,6 +738,11 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere   .= " AND SUB_ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $intIdSucursal);
             }
+            if(!empty($intIdArea))
+            {
+                $strWhere   .= " AND IAR.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea", $intIdArea);
+            }
             if(!empty($intIdEmpresa))
             {
                 $strWhere   .= " AND IEM.ID_EMPRESA = :intIdEmpresa ";
@@ -730,6 +764,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('ID_CLT_ENCUESTA', 'intIdCltEncuesta', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE_CLIENTE', 'strNombreClt', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE', 'strSucursal', 'string');
+            $objRsmBuilder->addScalarResult('AREA', 'strArea', 'string');
             $objRsmBuilder->addScalarResult('CORREO_CLIENTE', 'strCorreoClt', 'string');
             $objRsmBuilder->addScalarResult('PROMEDIO', 'strPromedio', 'string');
             $objRsmBuilder->addScalarResult('COMENTARIO', 'strComentario', 'string');

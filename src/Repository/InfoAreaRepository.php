@@ -1,78 +1,85 @@
 <?php
-
 namespace App\Repository;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
-use App\Entity\InfoArea;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
-use Doctrine\Persistence\ManagerRegistry;
-
-/**
- * @extends ServiceEntityRepository<InfoArea>
- *
- * @method InfoArea|null find($id, $lockMode = null, $lockVersion = null)
- * @method InfoArea|null findOneBy(array $criteria, array $orderBy = null)
- * @method InfoArea[]    findAll()
- * @method InfoArea[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
-class InfoAreaRepository extends ServiceEntityRepository
+class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, InfoArea::class);
-    }
-
     /**
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * Documentación para la función 'getArea'.
+     *
+     * Función que permite listar las areas.
+     * 
+     * @author Kevin Baque Puya
+     * @version 1.0 22-05-2023
+     * 
+     * @return array  $arrayResultado
+     * 
      */
-    public function add(InfoArea $entity, bool $flush = true): void
+    public function getArea($arrayParametros)
     {
-        $this->_em->persist($entity);
-        if ($flush) {
-            $this->_em->flush();
+        $arrayResultado      = array();
+        $objRsmBuilder       = new ResultSetMappingBuilder($this->_em);
+        $objQuery            = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        $intIdEmpresa        = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal       = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
+        $strMensajeError     = "";
+        $strSelect           = "";
+        $strFrom             = "";
+        $strWhere            = "";
+        $strOrderBy          = "";
+        try
+        {
+            $strSubFrom = "";
+            $strSubWhere  = "";
+            if(!empty($intIdEmpresa))
+            {
+                $strSubFrom   = " JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
+                $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+            }
+            $strSelect  = " SELECT IA.* ";
+            $strFrom    = " FROM INFO_SUCURSAL ISU 
+                            JOIN INFO_AREA IA ON ISU.ID_SUCURSAL=IA.SUCURSAL_ID
+            ".$strSubFrom;
+            $strWhere   = "  ";
+            $strOrderBy = " ORDER BY IA.FE_CREACION ASC ";
+            if(isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]))
+            {
+                $strWhere   = " WHERE IA.ESTADO IN (:strEstado) ";
+                $objQuery->setParameter("strEstado", $arrayParametros["strEstado"]);
+            }
+            else
+            {
+                $strWhere   = " WHERE IA.ESTADO IN ('ACTIVO','INACTIVO')";
+            }
+            if(isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]))
+            {
+                $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
+                $objQuery->setParameter("intIdSucursal", $arrayParametros["intIdSucursal"]);
+            }
+            if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
+            {
+                $strSelect  = " SELECT COUNT(*) AS CANTIDAD ";
+                $objRsmBuilder->addScalarResult('CANTIDAD', 'intCantidad', 'integer');
+            }
+            else
+            {
+                $objRsmBuilder->addScalarResult("ID_AREA", "intIdArea", "integer");
+                $objRsmBuilder->addScalarResult("AREA", "strArea", "string");
+                $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
+                $objRsmBuilder->addScalarResult("USR_CREACION", "strusrCreacion", "string");
+                $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");
+                $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
+                $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
+            }
+            $strSql  = $strSelect.$strFrom.$strWhere.$strSubWhere.$strOrderBy;
+            $objQuery->setSQL($strSql);
+            $arrayResultado["resultados"] = $objQuery->getResult();
         }
-    }
-
-    /**
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function remove(InfoArea $entity, bool $flush = true): void
-    {
-        $this->_em->remove($entity);
-        if ($flush) {
-            $this->_em->flush();
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
         }
+        $arrayResultado["error"] = $strMensajeError;
+        return $arrayResultado;
     }
-
-    // /**
-    //  * @return InfoArea[] Returns an array of InfoArea objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?InfoArea
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

@@ -29,6 +29,7 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
         $strFrom             = "";
         $strWhere            = "";
         $strOrderBy          = "";
+        $strGroupBy          = "";
         try
         {
             $strSelect  = " SELECT IE.* ";
@@ -52,14 +53,16 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
             if(isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]))
             {
                 $strFrom  .= " JOIN INFO_USUARIO_EMPRESA IUE ON IUE.EMPRESA_ID=IE.ID_EMPRESA ";
-                $strWhere .= " AND IUE.USUARIO_ID = :intIdUsuario ";
-                $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
             }
             if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]))
             {
                 $strFrom  .= " JOIN INFO_SUCURSAL ISU ON ISU.EMPRESA_ID=IE.ID_EMPRESA ";
-                $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
-                $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
+                if($arrayParametros["intIdCliente"] !=41)
+                {
+                    $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
+                    $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
+                }
+                $strGroupBy = "GROUP BY 1 ";
             }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {
@@ -81,7 +84,7 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
                 $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
                 $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
             }
-            $strSql  = $strSelect.$strFrom.$strWhere.$strOrderBy;
+            $strSql  = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();
         }

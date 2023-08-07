@@ -66,6 +66,16 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
                 $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
             }
+            if(isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]))
+            {
+                $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
+                $objQuery->setParameter("intIdSucursal", $arrayParametros["intIdSucursal"]);
+            }
+            if(isset($arrayParametros["intIdArea"]) && !empty($arrayParametros["intIdArea"]))
+            {
+                $strWhere .= " AND IA.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea", $arrayParametros["intIdArea"]);
+            }
             $objRsmBuilder->addScalarResult("ID_ENCUESTA", "intIdEncuesta", "integer");
             $objRsmBuilder->addScalarResult("DESCRIPCION", "strDescripcion", "string");
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");

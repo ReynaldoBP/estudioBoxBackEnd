@@ -14,7 +14,7 @@ use App\Entity\InfoClienteEncuesta;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoUsuario;
-
+use App\Entity\InfoPregunta;
 class InfoClienteEncuestaController extends AbstractController
 {
 
@@ -309,6 +309,9 @@ class InfoClienteEncuestaController extends AbstractController
         $objResponse          = new Response;
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
+        $arrayData            = array();
+        $arrayMeses           = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                 "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         $strMensaje           = "";
         try
         {
@@ -359,13 +362,28 @@ class InfoClienteEncuestaController extends AbstractController
                     }
                 }
             }
-            $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                             ->getResultadoProPregunta($arrayParametros);
-            if(!empty($arrayData["error"]))
+            if(!empty(isset($arrayParametros["arrayMes"]) && !empty($arrayParametros["arrayMes"])))
             {
-                throw new \Exception($arrayData["error"]);
+                foreach($arrayParametros["arrayMes"] as $arrayItemMes)
+                {
+                    $intMes                    = array_search($arrayItemMes, $arrayMeses);
+                    $arrayParametros["intMes"] = $intMes+1;
+                    $arrayDataTmp[] = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                           ->getResultadoProPreguntaIndvidual($arrayParametros);
+                }
+                foreach($arrayDataTmp as $arrayItemData)
+                {
+                    if(!empty($arrayItemData) && is_array($arrayItemData) && count($arrayItemData)!=0)
+                    {
+                        $arrayData[] = $arrayItemData;
+                    }
+                }
             }
-            if(count($arrayData["resultados"]) == 0)
+            else
+            {
+                throw new \Exception("Estimado Usuario el campo Tiempo es obligatorio para realizar la búsqueda.");
+            }
+            if(count($arrayData) == 0)
             {
                 throw new \Exception("No existen datos con los parámetros enviados.");
             }
@@ -376,9 +394,7 @@ class InfoClienteEncuestaController extends AbstractController
             $strMensaje = $ex->getMessage();
         }
         $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
-                                                   "arrayData"  => isset($arrayData["resultados"]) && 
-                                                                         !empty($arrayData["resultados"]) ? 
-                                                                         $arrayData:[],
+                                                   "arrayData"  => $arrayData,
                                                    "strMensaje" => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;

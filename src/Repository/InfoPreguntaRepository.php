@@ -34,6 +34,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
         $strSelect           = "";
         $strFrom             = "";
         $strWhere            = "";
+        $strGroupBy          = "";
         $strOrderBy          = "";
         try
         {
@@ -70,6 +71,18 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IP.ENCUESTA_ID = :intIdEncuesta ";
                 $objQuery->setParameter("intIdEncuesta", $arrayParametros["intIdEncuesta"]);
             }
+            if(isset($arrayParametros["strEncuesta"]) && !empty($arrayParametros["strEncuesta"]))
+            {
+                $strWhere .= " AND IE.TITULO = :strEncuesta ";
+                $objQuery->setParameter("strEncuesta", $arrayParametros["strEncuesta"]);
+            }
+            if(isset($arrayParametros["boolAgrupar"]) && !empty($arrayParametros["boolAgrupar"]) && 
+               $arrayParametros["boolAgrupar"] == "SI")
+            {
+                $strSelect .= " ,count(IP.DESCRIPCION) AS AGRUPADO ";
+                $strGroupBy = " GROUP BY IP.DESCRIPCION ";
+                $objRsmBuilder->addScalarResult("AGRUPADO", "intAgrupado", "integer");
+            }
             $objRsmBuilder->addScalarResult("ID_PREGUNTA", "intIdPregunta", "integer");
             $objRsmBuilder->addScalarResult("PREGUNTA", "strPregunta", "string");
             $objRsmBuilder->addScalarResult("OBLIGATORIA", "strEsObligatoria", "string");
@@ -82,7 +95,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");
             $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
             $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
-            $strSql  = $strSelect.$strFrom.$strWhere.$strOrderBy;
+            $strSql  = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();
         }

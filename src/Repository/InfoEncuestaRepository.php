@@ -34,6 +34,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strSelect           = "";
         $strFrom             = "";
         $strWhere            = "";
+        $strGroupBy          = "";
         $strOrderBy          = "";
         try
         {
@@ -76,6 +77,23 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IA.ID_AREA = :intIdArea ";
                 $objQuery->setParameter("intIdArea", $arrayParametros["intIdArea"]);
             }
+            if(isset($arrayParametros["strArea"]) && !empty($arrayParametros["strArea"]))
+            {
+                $strWhere .= " AND IA.AREA = :strArea ";
+                $objQuery->setParameter("strArea", $arrayParametros["strArea"]);
+            }
+            if(isset($arrayParametros["arrayIdSucursal"]) && !empty($arrayParametros["arrayIdSucursal"]))
+            {
+                $strWhere .= " AND ISU.ID_SUCURSAL in (:arrayIdSucursal) ";
+                $objQuery->setParameter("arrayIdSucursal", $arrayParametros["arrayIdSucursal"]);
+            }
+            if(isset($arrayParametros["boolAgrupar"]) && !empty($arrayParametros["boolAgrupar"]) && 
+               $arrayParametros["boolAgrupar"] == "SI")
+            {
+                $strSelect .= " ,count(IE.ID_ENCUESTA) AS AGRUPADO ";
+                $strGroupBy = " GROUP BY IE.TITULO ";
+                $objRsmBuilder->addScalarResult("AGRUPADO", "intAgrupado", "integer");
+            }
             $objRsmBuilder->addScalarResult("ID_ENCUESTA", "intIdEncuesta", "integer");
             $objRsmBuilder->addScalarResult("DESCRIPCION", "strDescripcion", "string");
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");
@@ -87,7 +105,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");
             $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
             $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
-            $strSql  = $strSelect.$strFrom.$strWhere.$strOrderBy;
+            $strSql  = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();
         }

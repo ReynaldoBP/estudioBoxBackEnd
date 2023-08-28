@@ -26,6 +26,7 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
         $strSelect           = "";
         $strFrom             = "";
         $strWhere            = "";
+        $strGroupBy          = "";
         $strOrderBy          = "";
         try
         {
@@ -56,6 +57,11 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $arrayParametros["intIdSucursal"]);
             }
+            if(isset($arrayParametros["arrayIdSucursal"]) && !empty($arrayParametros["arrayIdSucursal"]))
+            {
+                $strWhere .= " AND ISU.ID_SUCURSAL in (:arrayIdSucursal) ";
+                $objQuery->setParameter("arrayIdSucursal", $arrayParametros["arrayIdSucursal"]);
+            }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {
                 $strSelect  = " SELECT COUNT(*) AS CANTIDAD ";
@@ -71,7 +77,14 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
                 $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
                 $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
             }
-            $strSql  = $strSelect.$strFrom.$strWhere.$strSubWhere.$strOrderBy;
+            if(isset($arrayParametros["boolAgrupar"]) && !empty($arrayParametros["boolAgrupar"]) && 
+               $arrayParametros["boolAgrupar"] == "SI")
+            {
+                $strSelect .= " ,count(IA.AREA) AS AGRUPADO ";
+                $strGroupBy = " GROUP BY IA.AREA ";
+                $objRsmBuilder->addScalarResult("AGRUPADO", "intAgrupado", "integer");
+            }
+            $strSql  = $strSelect.$strFrom.$strWhere.$strSubWhere.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();
         }

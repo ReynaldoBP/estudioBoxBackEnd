@@ -551,8 +551,10 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
      */
     public function getResultadoProPreguntaIndvidual($arrayParametros)
     {
+        $strEstadistica     = $arrayParametros['strEstadistica'] ? $arrayParametros['strEstadistica']:'';
         $arrayPregunta      = $arrayParametros['arrayPregunta'] ? $arrayParametros['arrayPregunta']:'';
         $intIdPregunta      = $arrayParametros['intIdPregunta'] ? $arrayParametros['intIdPregunta']:'';
+        $strPregunta        = $arrayParametros['strPregunta'] ? $arrayParametros['strPregunta']:'';
         $intLimite          = $arrayParametros['intLimite'] ? $arrayParametros['intLimite']:1;
         $strGenero          = $arrayParametros['strGenero'] ? $arrayParametros['strGenero']:'';
         $strHorario         = $arrayParametros['strHorario'] ? $arrayParametros['strHorario']:'';
@@ -596,7 +598,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                       AND ICE.ESTADO     !='ELIMINADO' ";
             $strGroupBy     = " GROUP BY ANIO,MES,IP.ID_PREGUNTA,IR.RESPUESTA ";
             $strLimit       = "";
-            $strOrder       = " ORDER BY IR.RESPUESTA ASC ";
+            $strOrder       = " ORDER BY  CANTIDAD DESC ";
             $objRsmBuilder->addScalarResult('ANIO', 'intAnio', 'string');
             $objRsmBuilder->addScalarResult('MES', 'intMes', 'string');
             $objRsmBuilder->addScalarResult('PREGUNTA', 'strPregunta', 'string');
@@ -606,6 +608,11 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere .= " AND IE.ID_ENCUESTA = :intIdEncuesta ";
                 $objQuery->setParameter("intIdEncuesta", $intIdEncuesta);
+            }
+            if(isset($arrayParametros["strEncuesta"]) && !empty($arrayParametros["strEncuesta"]))
+            {
+                $strWhere .= " AND IE.TITULO = :strEncuesta ";
+                $objQuery->setParameter("strEncuesta", $arrayParametros["strEncuesta"]);
             }
             if(!empty($intIdEmpresa))
             {
@@ -642,10 +649,21 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IP.ID_PREGUNTA = :intIdPregunta ";
                 $objQuery->setParameter("intIdPregunta", $intIdPregunta);
             }
+            if(!empty($strPregunta))
+            {
+                $strWhere .= " AND IP.DESCRIPCION = :strPregunta ";
+                $objQuery->setParameter("strPregunta", $strPregunta);
+            }
             if(!empty($intMes))
             {
                 $strWhere .= " AND EXTRACT(MONTH FROM ICE.FE_CREACION ) = :intMes ";
                 $objQuery->setParameter("intMes", $intMes);
+            }
+            if(!empty($strEstadistica) && $strEstadistica == "Comparativa")
+            {
+                $strSelect  = " SELECT IP.DESCRIPCION AS PREGUNTA,IR.RESPUESTA,ISU.NOMBRE AS SUCURSAL,COUNT(IR.RESPUESTA) AS CANTIDAD ";
+                $strGroupBy = " GROUP BY IR.RESPUESTA,ISU.NOMBRE ";
+                $objRsmBuilder->addScalarResult('SUCURSAL', 'strSucursal', 'string');
             }
             $strSql       = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrder.$strLimit;
             $objQuery->setSQL($strSql);

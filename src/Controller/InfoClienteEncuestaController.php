@@ -362,26 +362,57 @@ class InfoClienteEncuestaController extends AbstractController
                     }
                 }
             }
-            if(!empty(isset($arrayParametros["arrayMes"]) && !empty($arrayParametros["arrayMes"])))
+            if(isset($arrayParametros["strEstadistica"]) && !empty($arrayParametros["strEstadistica"]))
             {
-                foreach($arrayParametros["arrayMes"] as $arrayItemMes)
+                if($arrayParametros["strEstadistica"] == "Comparativa")
                 {
-                    $intMes                    = array_search($arrayItemMes, $arrayMeses);
-                    $arrayParametros["intMes"] = $intMes+1;
-                    $arrayDataTmp[] = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
-                                           ->getResultadoProPreguntaIndvidual($arrayParametros);
-                }
-                foreach($arrayDataTmp as $arrayItemData)
-                {
-                    if(!empty($arrayItemData) && is_array($arrayItemData) && count($arrayItemData)!=0)
+                    if(isset($arrayParametros["arraySucursal"]) && !empty($arrayParametros["arraySucursal"]))
                     {
-                        $arrayData[] = $arrayItemData;
+                        foreach($arrayParametros["arraySucursal"] as $arrayItemSucursal)
+                        {
+                            $intMes                           = array_search($arrayParametros["arrayMes"][0], $arrayMeses);
+                            $arrayParametros["intMes"]        = $intMes+1;
+                            $arrayParametros["intIdSucursal"] = $arrayItemSucursal;
+                            $arrayDataTmp[] = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                   ->getResultadoProPreguntaIndvidual($arrayParametros);
+                        }
+                        foreach($arrayDataTmp as $arrayItemData)
+                        {
+                            if(!empty($arrayItemData) && is_array($arrayItemData) && count($arrayItemData)!=0)
+                            {
+                                $arrayData[] = $arrayItemData;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        throw new \Exception("Estimado Usuario el campo Sucursal es obligatorio para realizar la búsqueda.");
                     }
                 }
-            }
-            else
-            {
-                throw new \Exception("Estimado Usuario el campo Tiempo es obligatorio para realizar la búsqueda.");
+                else if($arrayParametros["strEstadistica"] == "Conceptual")
+                {
+                    if(!empty(isset($arrayParametros["arrayMes"]) && !empty($arrayParametros["arrayMes"])))
+                    {
+                        foreach($arrayParametros["arrayMes"] as $arrayItemMes)
+                        {
+                            $intMes                    = array_search($arrayItemMes, $arrayMeses);
+                            $arrayParametros["intMes"] = $intMes+1;
+                            $arrayDataTmp[] = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                   ->getResultadoProPreguntaIndvidual($arrayParametros);
+                        }
+                        foreach($arrayDataTmp as $arrayItemData)
+                        {
+                            if(!empty($arrayItemData) && is_array($arrayItemData) && count($arrayItemData)!=0)
+                            {
+                                $arrayData[] = $arrayItemData;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        throw new \Exception("Estimado Usuario el campo Tiempo es obligatorio para realizar la búsqueda.");
+                    }
+                }
             }
             if(count($arrayData) == 0)
             {

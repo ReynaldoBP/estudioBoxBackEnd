@@ -76,6 +76,13 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IE.TITULO = :strEncuesta ";
                 $objQuery->setParameter("strEncuesta", $arrayParametros["strEncuesta"]);
             }
+            if(isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]))
+            {
+                $strFrom   .= " JOIN INFO_AREA IA ON IA.ID_AREA=IE.AREA_ID
+                                JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=IA.SUCURSAL_ID
+                                AND ISU.EMPRESA_ID = :intIdEmpresa ";
+                $objQuery->setParameter("intIdEmpresa", $arrayParametros["intIdEmpresa"]);
+            }
             if(isset($arrayParametros["boolAgrupar"]) && !empty($arrayParametros["boolAgrupar"]) && 
                $arrayParametros["boolAgrupar"] == "SI")
             {

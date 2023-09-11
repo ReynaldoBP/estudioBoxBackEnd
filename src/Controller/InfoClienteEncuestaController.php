@@ -608,6 +608,191 @@ class InfoClienteEncuestaController extends AbstractController
     }
 
     /**
+     * @Rest\Post("/apiWeb/getReporteDataEncuesta")
+     * 
+     * Documentación para la función 'getReporteDataEncuesta'.
+     *
+     * Función que permite exportar un reporte de las respuestas en la opción Data Encuesta.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 10-09-2023
+     *
+     */
+    public function getReporteDataEncuesta(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            $arrayParametrosPregunta = array("strEncuesta"  => $arrayParametros["strTitulo"],
+                                             "intIdEmpresa" => $intIdEmpresa,
+                                             "boolAgrupar"  => "SI");
+            $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
+                                            ->getPregunta($arrayParametrosPregunta);
+            if(!empty($arrayDataPregunta["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            $arrayParametros["arrayPregunta"] = $arrayDataPregunta["resultados"];
+            $arrayData                        = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                     ->getReporteDataEncuesta($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
+                                                   "arrayDataPregunta" => $arrayDataPregunta["resultados"],
+                                                   "arrayData"         => isset($arrayData["resultados"]) && 
+                                                                          !empty($arrayData["resultados"]) ? 
+                                                                          $arrayData:[],
+                                                   "strMensaje"        => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiWeb/getReporteEstPorSucursal")
+     * 
+     * Documentación para la función 'getReporteEstPorSucursal'.
+     *
+     * Función que permite exportar un reporte de las estadísticas por sucursal.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 11-09-2023
+     *
+     */
+    public function getReporteEstPorSucursal(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            if(empty($intIdEmpresa))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
+            $arrayParametrosPregunta = array("strEncuesta"  => $arrayParametros["strEncuesta"],
+                                             "intIdEmpresa" => $intIdEmpresa,
+                                             "boolAgrupar"  => "SI");
+            $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
+                                            ->getPregunta($arrayParametrosPregunta);
+            if(!empty($arrayDataPregunta["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            $arrayParametros["arrayPregunta"] = $arrayDataPregunta["resultados"];
+            $arrayMeses                       = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                                 "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            $intMes                           = array_search($arrayParametros["arrayMes"][0], $arrayMeses);
+            $arrayParametros["intMes"]        = $intMes+1;
+            $arrayData                        = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                     ->getReporteEstPorSucursal($arrayParametros);
+            if(!empty($arrayData["error"]))
+            {
+                throw new \Exception($arrayData["error"]);
+            }
+            if(count($arrayData["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
+                                                   "arrayData"         => isset($arrayData["resultados"]) && 
+                                                                          !empty($arrayData["resultados"]) ? 
+                                                                          $arrayData:[],
+                                                   "strMensaje"        => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
      * @Rest\Post("/apiWeb/editEncuestasRealizadas")
      * 
      * Documentación para la función 'editEncuestasRealizadas'.

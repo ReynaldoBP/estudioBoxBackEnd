@@ -225,6 +225,27 @@ class InfoRespuestaController extends AbstractController
             {
                 error_log("No se cumplieron los parametros necesarios para ingresar en nuevo flujo");
             }
+            //Validamos que todas las preguntas que recibimos desde el app estén en la encuesta
+            $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
+                                            ->getPregunta(array("intIdEncuesta"=>$intIdEncuesta));
+            if(!empty($arrayDataPregunta["error"]))
+            {
+                throw new \Exception($arrayDataPregunta["error"]);
+            }
+            if(count($arrayDataPregunta["resultados"])==0)
+            {
+                throw new \Exception("No existen preguntas con los parámetros enviados.");
+            }
+            foreach($arrayDataPregunta["resultados"] as $arrayItemPregunta)
+            {
+                if($arrayItemPregunta["strEstado"] == "ACTIVO" && $arrayItemPregunta["strEsObligatoria"] == "SI")
+                {
+                    if(!array_key_exists($arrayItemPregunta["intIdPregunta"],$arrayPregunta))
+                    {
+                        throw new \Exception("La pregunta: ".$arrayItemPregunta["strPregunta"]." es obligatoria.");
+                    }
+                }
+            }
             foreach ($arrayPregunta as $intIdPregunta => $strRespuesta) 
             {
                 $objPregunta = $this->getDoctrine()->getRepository(InfoPregunta::class)

@@ -579,18 +579,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
                                     INNER JOIN INFO_CLIENTE_ENCUESTA ICE ON ICE.ID_CLT_ENCUESTA     = IR.CLT_ENCUESTA_ID
                                     INNER JOIN INFO_ENCUESTA IE          ON IE.ID_ENCUESTA          = ICE.ENCUESTA_ID
-                                    INNER JOIN ADMI_PARAMETRO AP_HORARIO ON AP_HORARIO.DESCRIPCION  = 'HORARIO'
-                                        AND CAST(ICE.FE_CREACION AS TIME) >= CAST(AP_HORARIO.VALOR2 AS TIME)
-                                        AND CAST(ICE.FE_CREACION AS TIME) <= CAST(AP_HORARIO.VALOR3 AS TIME)
                                     INNER JOIN INFO_CLIENTE IC           ON IC.ID_CLIENTE           = ICE.CLIENTE_ID
-                                    INNER JOIN ADMI_PARAMETRO AP_EDAD    ON AP_EDAD.DESCRIPCION     = 'EDAD'
-                                    AND CASE WHEN IC.EDAD !='SIN EDAD'
-                                    THEN
-                                        IC.EDAD >= AP_EDAD.VALOR2
-                                        AND IC.EDAD <= AP_EDAD.VALOR3
-                                    ELSE
-                                        IC.EDAD = AP_EDAD.VALOR2
-                                    END
                                     INNER JOIN INFO_AREA IAR         ON IAR.ID_AREA         =  IE.AREA_ID
                                     INNER JOIN INFO_SUCURSAL ISU         ON ISU.ID_SUCURSAL         =  IAR.SUCURSAL_ID 
                                     INNER JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
@@ -636,11 +625,22 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             }
             if(!empty($strHorario))
             {
+                $strFrom .= " INNER JOIN ADMI_PARAMETRO AP_HORARIO ON AP_HORARIO.DESCRIPCION  = 'HORARIO'
+                                AND CAST(ICE.FE_CREACION AS TIME) >= CAST(AP_HORARIO.VALOR2 AS TIME)
+                                AND CAST(ICE.FE_CREACION AS TIME) <= CAST(AP_HORARIO.VALOR3 AS TIME) ";
                 $strWhere .= " AND AP_HORARIO.VALOR1 = :strHorario ";
                 $objQuery->setParameter("strHorario", $strHorario);
             }
             if(!empty($strEdad))
             {
+                $strFrom .= " INNER JOIN ADMI_PARAMETRO AP_EDAD    ON AP_EDAD.DESCRIPCION     = 'EDAD'
+                                AND CASE WHEN IC.EDAD !='SIN EDAD'
+                                THEN
+                                    IC.EDAD >= AP_EDAD.VALOR2
+                                    AND IC.EDAD <= AP_EDAD.VALOR3
+                                ELSE
+                                    IC.EDAD = AP_EDAD.VALOR2
+                                END ";
                 $strWhere .= " AND AP_EDAD.VALOR1 = :strEdad ";
                 $objQuery->setParameter("strEdad", $strEdad);
             }
@@ -916,6 +916,152 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         }
         $arrayRespuesta['error'] = $strMensajeError;
         return $arrayRespuesta;
+    }
+
+    /**
+     * Documentación para la función 'getReporteDataEncuesta'
+     *
+     * Función que permite exportar un reporte de las respuestas en la opción Data Encuesta.
+     * 
+     * @author Kevin Baque
+     * @version 1.0 10-09-2023
+     * 
+     * @return array  $arrayReporteCltEncuesta
+     * 
+     */
+    public function getReporteDataEncuesta($arrayParametros)
+    {
+        $strTitulo               = isset($arrayParametros["strTitulo"]) && !empty($arrayParametros["strTitulo"]) ? $arrayParametros["strTitulo"]:"";
+        $arrayPregunta           = isset($arrayParametros["arrayPregunta"]) && !empty($arrayParametros["arrayPregunta"]) ? $arrayParametros["arrayPregunta"]:"";
+        $intIdEmpresa            = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intMes                  = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
+        $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
+        $arrayReporteCltEncuesta = array();
+        $strMensajeError         = '';
+        $objRsmBuilder           = new ResultSetMappingBuilder($this->_em);
+        $objQuery                = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        $strSelectPregunta       = "";
+        try
+        {
+            $objRsmBuilder->addScalarResult('sucursal', 'sucursal', 'string');
+            $objRsmBuilder->addScalarResult('area', 'area', 'string');
+            foreach($arrayPregunta as $arrayItemPregunta)
+            {
+                if($arrayItemPregunta["strEstado"] == "ACTIVO")
+                {
+                    $strSelectPregunta .= "MAX(CASE WHEN pregunta = '".$arrayItemPregunta["strPregunta"]."' THEN respuesta END) AS '".$arrayItemPregunta["strPregunta"]."',";
+                    $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
+                }
+            }
+            $strSelect      = " SELECT sucursal,area, ".$strSelectPregunta." fecha";
+            $strFrom        = " FROM (
+                                    select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
+                                           ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado
+                                    FROM INFO_ENCUESTA ie
+                                        JOIN INFO_AREA ia on ia.id_area=ie.area_id
+                                        JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id
+                                        and isu.EMPRESA_ID = :intIdEmpresa
+                                        JOIN INFO_CLIENTE_ENCUESTA ice on ice.ENCUESTA_ID=ie.ID_ENCUESTA
+                                            AND ice.estado='ACTIVO'
+                                            AND EXTRACT(MONTH FROM ice.FE_CREACION) = :intMes
+                                            AND EXTRACT(YEAR  FROM ice.FE_CREACION) = :intAnio
+                                        JOIN INFO_CLIENTE ic on ice.CLIENTE_ID=ic.ID_CLIENTE
+                                        JOIN INFO_RESPUESTA ir on ir.CLT_ENCUESTA_ID=ice.ID_CLT_ENCUESTA
+                                        JOIN INFO_PREGUNTA ip on ip.ID_PREGUNTA=ir.PREGUNTA_ID
+                                    WHERE ie.TITULO = :strTitulo
+                                ) AS subquery_alias ";
+            $strGroupBy     = " GROUP BY id ";
+            $strOrderBy     = " ORDER BY id asc ";
+            $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
+            $objQuery->setParameter("intMes", $intMes);
+            $objQuery->setParameter("intAnio", $intAnio);
+            $objQuery->setParameter("strTitulo", $strTitulo);
+            $objRsmBuilder->addScalarResult('fecha', 'fecha', 'string');
+            $strSql         = $strSelect.$strFrom.$strGroupBy.$strOrderBy;
+            $objQuery->setSQL($strSql);
+            $arrayReporteCltEncuesta['resultados'] = $objQuery->getResult();
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayReporteCltEncuesta['error'] = $strMensajeError;
+        return $arrayReporteCltEncuesta;
+    }
+
+    /**
+     * Documentación para la función 'getReporteEstPorSucursal'
+     *
+     * Función que permite exportar un reporte de las estadísticas por sucursal.
+     * 
+     * @author Kevin Baque
+     * @version 1.0 11-09-2023
+     * 
+     * @return array  $arrayReporteCltEncuesta
+     * 
+     */
+    public function getReporteEstPorSucursal($arrayParametros)
+    {
+        $strEncuesta             = isset($arrayParametros["strEncuesta"]) && !empty($arrayParametros["strEncuesta"]) ? $arrayParametros["strEncuesta"]:"";
+        $arrayPregunta           = isset($arrayParametros["arrayPregunta"]) && !empty($arrayParametros["arrayPregunta"]) ? $arrayParametros["arrayPregunta"]:"";
+        $intIdEmpresa            = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intMes                  = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
+        $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
+        $arrayReporteCltEncuesta = array();
+        $strMensajeError         = '';
+        $objRsmBuilder           = new ResultSetMappingBuilder($this->_em);
+        $objRsmBuilderCount      = new ResultSetMappingBuilder($this->_em);
+        $objQuery                = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        $objQueryCount           = $this->_em->createNativeQuery(null, $objRsmBuilderCount);
+        $strSelectPregunta       = "";
+        try
+        {
+            //error_log( print_r($arrayParametros, TRUE) );
+            foreach($arrayPregunta as $arrayItemPregunta)
+            {
+                if($arrayItemPregunta["strEstado"] == "ACTIVO" && $arrayItemPregunta["strTipoOpcionRespuesta"] != "ABIERTA")
+                {
+                    //Para poder realizar el calculo de porcentajes, primero debemos calcular el valor total por la pregunta.
+                    $strSelectCount = " select count(ir.RESPUESTA) as total ";
+                    $strFrom        = " from INFO_ENCUESTA ie
+                                            join INFO_AREA ia on ia.id_area=ie.area_id
+                                            join INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id
+                                            join INFO_CLIENTE_ENCUESTA ice on ice.ENCUESTA_ID=ie.ID_ENCUESTA
+                                                and ice.estado='ACTIVO'
+                                            join INFO_CLIENTE ic on ice.CLIENTE_ID=ic.ID_CLIENTE
+                                            join INFO_RESPUESTA ir on ir.CLT_ENCUESTA_ID=ice.ID_CLT_ENCUESTA
+                                            join INFO_PREGUNTA ip on ip.ID_PREGUNTA=ir.PREGUNTA_ID ";
+                    $strWhere       = " where ie.TITULO = '".$arrayItemPregunta["strEncuesta"]."'
+                                        and ip.DESCRIPCION = '".$arrayItemPregunta["strPregunta"]."'
+                                        and ip.TIPO_OPCION_RESPUESTA_ID!= 3
+                                        AND EXTRACT(MONTH FROM ice.FE_CREACION) =".$intMes." ";
+                    $strOrderBy     = " order by ir.respuesta asc ";
+                    $strSql         = $strSelectCount.$strFrom.$strWhere.$strOrderBy;
+                    $objRsmBuilderCount->addScalarResult('total', 'total', 'integer');
+                    $objQueryCount->setSQL($strSql);
+                    $arrayCantidadTotal = $objQueryCount->getSingleScalarResult();
+                    //Ahora que tengo el valor total, ahora calculo individualmente por respuesta de cada pregunta
+                    $strSelect      = " select ip.DESCRIPCION as pregunta,isu.nombre as sucursal,ir.RESPUESTA as respuesta, count(ir.RESPUESTA) as cant_respuesta,
+                                        concat(round((count(ir.RESPUESTA)*100)/".$arrayCantidadTotal.",2),'%') as cant_Porcentaje ";
+                    $objRsmBuilder->addScalarResult('pregunta', 'Pregunta', 'string');
+                    $objRsmBuilder->addScalarResult('sucursal', 'Sucursal', 'string');
+                    $objRsmBuilder->addScalarResult('respuesta', 'Respuesta', 'string');
+                    $objRsmBuilder->addScalarResult('cant_respuesta', 'Valores', 'integer');
+                    $objRsmBuilder->addScalarResult('cant_Porcentaje', 'Porcentaje', 'string');
+                    $strGroupBy     = " group by isu.nombre,ip.DESCRIPCION,ir.RESPUESTA ";
+                    $strSql         = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrderBy;
+                    $objQuery->setSQL($strSql);
+                    $arrayTemp[] = $objQuery->getResult();
+                }
+                $arrayReporteCltEncuesta['resultados'] = $arrayTemp;
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayReporteCltEncuesta['error'] = $strMensajeError;
+        return $arrayReporteCltEncuesta;
     }
 
     /**

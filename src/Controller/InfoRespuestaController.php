@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
+use App\Controller\UtilitarioController;
 use App\Entity\InfoRespuesta;
 use App\Entity\InfoPregunta;
 use App\Entity\InfoCliente;
@@ -343,6 +344,62 @@ class InfoRespuestaController extends AbstractController
                                                                          $arrayData:[],
                                                    "strMensaje" => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiMovil/enviarCorreoPrueba")
+     *
+     * Documentación para la función 'enviarCorreoPrueba'
+     * 
+     * Función encargado de enviar correos de pruebas.
+     *
+     * @author Kevin Baque
+     * @version 1.0 17-09-2023
+     *
+     * @return array  $objResponse
+     */
+    public function enviarCorreoPrueba(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest     = json_decode($objRequest->getContent(),true);
+        $arrayParametros  = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $strDestinatario  = $arrayParametros['strCorreo'] ? $arrayParametros['strCorreo']:'';
+        $strRemitente     = 'notificaciones@bitte.app';
+        $objResponse      = new Response;
+        $arrayParametros  = array();
+        $intStatus        = 200;
+        $strMensaje       = "";
+        try
+        {
+            /*$objPlantilla  = $this->getDoctrine()
+                                  ->getRepository(InfoPlantilla::class)
+                                  ->findOneBy(array('DESCRIPCION'=>"ENCUESTA_CUPON"));
+            $strMensajeCorreo = stream_get_contents ($objPlantilla->getPLANTILLA());
+            $strCuerpoCorreo1   = "Acabas de ganar un cupón para participar en el sorteo mensual del Tenedor de Oro por comidas gratis de nuestros restaurantes participantes.";
+            $strMensajeCorreo   = str_replace('strCuerpoCorreo1',$strCuerpoCorreo1,$strMensajeCorreo);*/
+            $strAsunto          = "Prueba Correo";
+            $strMensajeCorreo   = "Ok";
+            $arrayParametros    = array("strAsunto"        => $strAsunto,
+                                        "strMensajeCorreo" => $strMensajeCorreo,
+                                        "strRemitente"     => $strRemitente,
+                                        "strDestinatario"  => $strDestinatario);
+                                        error_log("1");
+            $objController    = new UtilitarioController();
+            error_log("2");
+            $objController->setContainer($this->container);
+            error_log("3");
+            $strMensajeError = $objController->enviaCorreo($arrayParametros);
+            error_log("4");
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus  = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set('Access-Control-Allow-Origin', '*');
         return $objResponse;
     }
 

@@ -936,6 +936,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intIdEmpresa            = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $intMes                  = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
         $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
+        $intIdSucursal           = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
+        $intIdArea               = isset($arrayParametros["intIdArea"]) && !empty($arrayParametros["intIdArea"]) ? $arrayParametros["intIdArea"]:"";
         $arrayReporteCltEncuesta = array();
         $strMensajeError         = '';
         $objRsmBuilder           = new ResultSetMappingBuilder($this->_em);
@@ -953,29 +955,42 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
                 }
             }
-            $strSelect      = " SELECT sucursal,area, ".$strSelectPregunta." fecha";
-            $strFrom        = " FROM (
-                                    select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
-                                           ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado
-                                    FROM INFO_ENCUESTA ie
-                                        JOIN INFO_AREA ia on ia.id_area=ie.area_id
-                                        JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id
-                                        and isu.EMPRESA_ID = :intIdEmpresa
-                                        JOIN INFO_CLIENTE_ENCUESTA ice on ice.ENCUESTA_ID=ie.ID_ENCUESTA
-                                            AND ice.estado='ACTIVO'
-                                            AND EXTRACT(MONTH FROM ice.FE_CREACION) = :intMes
-                                            AND EXTRACT(YEAR  FROM ice.FE_CREACION) = :intAnio
-                                        JOIN INFO_CLIENTE ic on ice.CLIENTE_ID=ic.ID_CLIENTE
-                                        JOIN INFO_RESPUESTA ir on ir.CLT_ENCUESTA_ID=ice.ID_CLT_ENCUESTA
-                                        JOIN INFO_PREGUNTA ip on ip.ID_PREGUNTA=ir.PREGUNTA_ID
-                                    WHERE ie.TITULO = :strTitulo
-                                ) AS subquery_alias ";
+            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha";
+            $strFrom        = " FROM ( ";
+            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
+                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado ";
+            $strSubFrom     = " FROM INFO_ENCUESTA ie
+                                JOIN INFO_AREA ia on ia.id_area=ie.area_id
+                                JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id
+                                and isu.EMPRESA_ID = :intIdEmpresa
+                                JOIN INFO_CLIENTE_ENCUESTA ice on ice.ENCUESTA_ID=ie.ID_ENCUESTA
+                                    AND ice.estado='ACTIVO'
+                                    AND EXTRACT(MONTH FROM ice.FE_CREACION) = :intMes
+                                    AND EXTRACT(YEAR  FROM ice.FE_CREACION) = :intAnio
+                                JOIN INFO_CLIENTE ic on ice.CLIENTE_ID=ic.ID_CLIENTE
+                                JOIN INFO_RESPUESTA ir on ir.CLT_ENCUESTA_ID=ice.ID_CLT_ENCUESTA
+                                JOIN INFO_PREGUNTA ip on ip.ID_PREGUNTA=ir.PREGUNTA_ID ";
+            $strSubWhere    = " WHERE ie.TITULO = :strTitulo ";
+            if(!empty($intIdSucursal))
+            {
+                $strSubWhere .= " AND isu.ID_SUCURSAL = :intIdSucursal ";
+                $objQuery->setParameter("intIdSucursal",$intIdSucursal);
+            }
+            if(!empty($intIdArea))
+            {
+                $strSubWhere .= " AND ia.ID_AREA = :intIdArea ";
+                $objQuery->setParameter("intIdArea",$intIdArea);
+            }
+            $strFrom       .= $strSubSelect.$strSubFrom.$strSubWhere;
+            $strFrom       .= " ) AS subquery_alias ";
             $strGroupBy     = " GROUP BY id ";
             $strOrderBy     = " ORDER BY id asc ";
             $objQuery->setParameter("intIdEmpresa", $intIdEmpresa);
             $objQuery->setParameter("intMes", $intMes);
             $objQuery->setParameter("intAnio", $intAnio);
             $objQuery->setParameter("strTitulo", $strTitulo);
+            
+            $objRsmBuilder->addScalarResult('id', 'id', 'integer');
             $objRsmBuilder->addScalarResult('fecha', 'fecha', 'string');
             $strSql         = $strSelect.$strFrom.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
@@ -1004,6 +1019,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
     {
         $strEncuesta             = isset($arrayParametros["strEncuesta"]) && !empty($arrayParametros["strEncuesta"]) ? $arrayParametros["strEncuesta"]:"";
         $arrayPregunta           = isset($arrayParametros["arrayPregunta"]) && !empty($arrayParametros["arrayPregunta"]) ? $arrayParametros["arrayPregunta"]:"";
+        $arraySucursal           = isset($arrayParametros["arraySucursal"]) && !empty($arrayParametros["arraySucursal"]) ? $arrayParametros["arraySucursal"]:"";
+        $strArea                 = isset($arrayParametros["strArea"]) && !empty($arrayParametros["strArea"]) ? $arrayParametros["strArea"]:"";
         $intIdEmpresa            = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $intMes                  = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
         $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
@@ -1034,7 +1051,19 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $strWhere       = " where ie.TITULO = '".$arrayItemPregunta["strEncuesta"]."'
                                         and ip.DESCRIPCION = '".$arrayItemPregunta["strPregunta"]."'
                                         and ip.TIPO_OPCION_RESPUESTA_ID!= 3
-                                        AND EXTRACT(MONTH FROM ice.FE_CREACION) =".$intMes." ";
+                                        and EXTRACT(MONTH FROM ice.FE_CREACION) =".$intMes." ";
+                    if(!empty($arraySucursal))
+                    {
+                        $strWhere  .= " and isu.id_sucursal IN (:arraySucursal) ";
+                        $objQuery->setParameter("arraySucursal", $arraySucursal);
+                        $objQueryCount->setParameter("arraySucursal", $arraySucursal);
+                    }
+                    if(!empty($strArea))
+                    {
+                        $strWhere .= " and ia.area = :strArea ";
+                        $objQuery->setParameter("strArea",$strArea);
+                        $objQueryCount->setParameter("strArea", $strArea);
+                    }
                     $strOrderBy     = " order by ir.respuesta asc ";
                     $strSql         = $strSelectCount.$strFrom.$strWhere.$strOrderBy;
                     $objRsmBuilderCount->addScalarResult('total', 'total', 'integer');

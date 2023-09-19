@@ -82,6 +82,16 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                                 JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=IA.SUCURSAL_ID
                                 AND ISU.EMPRESA_ID = :intIdEmpresa ";
                 $objQuery->setParameter("intIdEmpresa", $arrayParametros["intIdEmpresa"]);
+                if(isset($arrayParametros["arraySucursal"]) && !empty($arrayParametros["arraySucursal"]))
+                {
+                    $strFrom .= " AND ISU.ID_SUCURSAL IN (:arraySucursal) ";
+                    $objQuery->setParameter("arraySucursal", $arrayParametros["arraySucursal"]);
+                }
+                if(isset($arrayParametros["strArea"]) && !empty($arrayParametros["strArea"]))
+                {
+                    $strFrom .= " AND IA.AREA IN (:strArea) ";
+                    $objQuery->setParameter("strArea", $arrayParametros["strArea"]);
+                }
             }
             if(isset($arrayParametros["boolAgrupar"]) && !empty($arrayParametros["boolAgrupar"]) && 
                $arrayParametros["boolAgrupar"] == "SI")

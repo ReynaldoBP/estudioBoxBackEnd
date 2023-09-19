@@ -753,9 +753,11 @@ class InfoClienteEncuestaController extends AbstractController
                     }
                 }
             }
-            $arrayParametrosPregunta = array("strEncuesta"  => $arrayParametros["strEncuesta"],
-                                             "intIdEmpresa" => $intIdEmpresa,
-                                             "boolAgrupar"  => "SI");
+            $arrayParametrosPregunta = array("arraySucursal" => $arrayParametros["arraySucursal"],
+                                             "strArea"       => $arrayParametros["strArea"],
+                                             "strEncuesta"   => $arrayParametros["strEncuesta"],
+                                             "intIdEmpresa"  => $intIdEmpresa,
+                                             "boolAgrupar"   => "SI");
             $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
                                             ->getPregunta($arrayParametrosPregunta);
             if(!empty($arrayDataPregunta["error"]))

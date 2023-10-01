@@ -27,8 +27,24 @@ use App\Entity\AdmiTipoCupon;
 use App\Entity\InfoCuponHistorial;
 use App\Entity\InfoCuponPromocionClt;
 use App\Entity\InfoPromocionHistorial;
+use App\Entity\InfoRespuestaDeficientes;
+use Symfony\Component\Mailer\MailerInterface;
+
 class InfoRespuestaController extends AbstractController
 {
+
+    /*private $mailer;
+
+    public function __construct(MailerInterface $mailer)
+    {
+        $this->mailer = $mailer;
+    }*/
+    private $utilitarioController;
+
+    public function __construct(UtilitarioController $utilitarioController)
+    {
+        $this->utilitarioController = $utilitarioController;
+    }
     /**
      * @Rest\Post("/apiMovil/createRespuesta")
      * 
@@ -41,6 +57,9 @@ class InfoRespuestaController extends AbstractController
      *
      * @author Kevin Baque Puya
      * @version 1.0 23-04-2023 - Se agrega Lógica para crear cupones.
+     * 
+     * @author David Leon 
+     * @version 1.2 28-09-2023 - Se agrega Lógica para calificaciones bajas.
      *
      */
     public function createRespuesta(Request $objRequest)
@@ -60,6 +79,9 @@ class InfoRespuestaController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $strCuerpoCorreo    = "";
+        $strResPositiva     = "★";
+        $strNegativa        = "☆";
         try
         {
             //Si existe correo, lo validamos
@@ -260,6 +282,160 @@ class InfoRespuestaController extends AbstractController
                 {
                     throw new \Exception("La pregunta: ".$objPregunta->getDESCRIPCION()." es obligatoria.");
                 }
+                //Validamos si la respuesta amertica envio de correo
+            
+                $objRespuestaDef = $this->getDoctrine()->getRepository(InfoRespuestaDeficientes::class)
+                                                                    ->findOneBy(array("ESTADO"      => "ACTIVO",
+                                                                                      "EMPRESA_ID"  => $objEmpresa->getId(),
+                                                                                      "RESPUESTA"   => $strRespuesta));
+                if(is_object($objRespuestaDef) && !empty($objRespuestaDef))
+                {
+                    //correo
+                    $strCuerpoCorreo .= '
+                            <tr>
+                                <td class="x_x_x_p1"
+                                    style="direction:ltr; text-align:center; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:20px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                                    <b>'.$objPregunta->getDESCRIPCION().'</b>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="x_x_x_p1"
+                                    style="direction:ltr; text-align:center; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:35px; line-height:26px">
+                                    '.$strResPositiva.'
+                                </td>
+                            </tr>';
+                    $strCuerpoCorreo .= '
+                    <tr>
+                        <td class="x_p1"
+                            style="direction:ltr; text-align:justify; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:15px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                            <br><b>Para más información estadística, por favor has click <a href=\'http://www.estudioBox.app/\' target="_blank">Aquí.</a> con su usuario y contraseña.</b><br>
+                        </td>
+                    </tr>';
+                    $strMensajeCorreo = '<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Título de tu página</title>
+                    </head>
+                    <body style="background-color: #d6d6d5; margin: 0; padding: 0;">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#d6d6d5" class="" style="background-color:#d6d6d5; border:0; border-collapse:collapse; border-spacing:0">
+                        <tbody>
+                            <tr>
+                                <td align="center" style="display:block">
+                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="" style="border:0; border-collapse:collapse; border-spacing:0; max-width:700px">
+                                        <tbody>
+                                            <tr>
+                                                <td style="background-color:#ffffff">
+                                                    <table border="0" cellpadding="0" cellspacing="0" style="border:none; border-collapse:collapse; border-spacing:0; max-width:700px; width:100%; background-color:#ffffff">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <img data-imagetype="External" src="https://imagenes-correo-bitte.s3.amazonaws.com/encuesta/banner.jpg" border="0" alt="" align="center" style="clear:both; display:block; max-width:100%; outline:none; text-decoration:none">
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border:none; border-collapse:collapse; border-spacing:0; width:100%">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="x_outsidegutter" align="left" style="direction:ltr; text-align:left; background-color:#F8F8F9; padding:0 14px 0 14px; padding-bottom:50px; padding-top:30px">
+                                                                    <table border="0" cellpadding="0" cellspacing="0" class="" style="border:none; border-collapse:collapse; border-spacing:0; width:100%">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style="direction:ltr; text-align:left">
+                                                                                    <table border="0" cellpadding="0" cellspacing="0" class="x_t1of12" align="left" style="border:none; border-collapse:collapse; border-spacing:0; max-width:56px; width:100%">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="direction:ltr; text-align:left; padding-left:12px; padding-right:12px">
+                                                                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" align="left" style="border:none; border-collapse:collapse; border-spacing:0; table-layout:fixed; width:100%">
+                                                                                                        <tbody>
+                                                                                                            <tr>
+                                                                                                                <td height="2" style="direction:ltr; text-align:left; font-size:0; line-height:1px">
+                                                                                                                    &nbsp;
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        </tbody>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                    <table border="0" cellpadding="0" cellspacing="0" class="x_t11of12" align="left" style="border:none; border-collapse:collapse; border-spacing:0; max-width:616px; width:100%">
+                                                                                        <tbody>
+                                                                                            <tr>
+                                                                                                <td style="direction:ltr; text-align:justify; padding-left:0; padding-right:0">
+                                                                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" align="left" style="border:none; border-collapse:collapse; border-spacing:0; table-layout:fixed; width:100%">
+                                                                                                        <tbody>
+                                                                                                            <tr>
+                                                                                                                <td style="direction:ltr; text-align:justify">
+                                                                                                                    <table border="0" cellpadding="0" cellspacing="0" class="x_t9of12" align="left" style="border:none; border-collapse:collapse; border-spacing:0; max-width:504px; width:100%">
+                                                                                                                        <tbody>
+                                                                                                                            <tr>
+                                                                                                                                <td style="direction:ltr; text-align:justify; padding-left:12px; padding-right:12px">
+                                                                                                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" align="left" style="border:none; border-collapse:collapse; border-spacing:0; table-layout:fixed; width:100%">
+                                                                                                                                        <tbody>
+                                                                                                                                            <tr>
+                                                                                                                                                <td class="x_p1" style="direction:ltr; text-align:justify; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:20px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                                                                                                                                                    '.$strCuerpoCorreo.'
+                                                                                                                                                </td>
+                                                                                                                                            </tr>
+                                                                                                                                        </tbody>
+                                                                                                                                    </table>
+                                                                                                                                </td>
+                                                                                                                            </tr>
+                                                                                                                        </tbody>
+                                                                                                                    </table>
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        </tbody>
+                                                                                                    </table>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table border="0" cellpadding="0" cellspacing="0" style="border:none; border-collapse:collapse; border-spacing:0; max-width:700px; width:100%; background-color:#ffffff">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <img data-imagetype="External" src="https://imagenes-correo-bitte.s3.amazonaws.com/bienvenida/redesYTerminos.jpg" border="0" alt="" align="center" style="clear:both; display:block; max-width:100%; outline:none; text-decoration:none">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </body>
+                    </html>';
+                    $strAsunto          = "Calificacion baja";
+                    //$strMensajeCorreo   = "Pilas te calificaron Bajo";
+                    $arrayParametros    = array("strAsunto"        => $strAsunto,
+                                                "strMensajeCorreo" => $strMensajeCorreo,
+                                                "strRemitente"     => 'notificaciones@bitte.app',//$strRemitente,
+                                                "strDestinatario"  => 'dleonbriones@gmail.com');//$strDestinatario);
+                    $strMensajeError = $this->utilitarioController->enviaCorreo($arrayParametros);
+                }     
                 $entityRespuesta = new InfoRespuesta();
                 $entityRespuesta->setRESPUESTA($strRespuesta);
                 $entityRespuesta->setPREGUNTAID($objPregunta);
@@ -372,12 +548,6 @@ class InfoRespuestaController extends AbstractController
         $strMensaje       = "";
         try
         {
-            /*$objPlantilla  = $this->getDoctrine()
-                                  ->getRepository(InfoPlantilla::class)
-                                  ->findOneBy(array('DESCRIPCION'=>"ENCUESTA_CUPON"));
-            $strMensajeCorreo = stream_get_contents ($objPlantilla->getPLANTILLA());
-            $strCuerpoCorreo1   = "Acabas de ganar un cupón para participar en el sorteo mensual del Tenedor de Oro por comidas gratis de nuestros restaurantes participantes.";
-            $strMensajeCorreo   = str_replace('strCuerpoCorreo1',$strCuerpoCorreo1,$strMensajeCorreo);*/
             $strAsunto          = "Prueba Correo";
             $strMensajeCorreo   = "Ok";
             $arrayParametros    = array("strAsunto"        => $strAsunto,
@@ -385,12 +555,7 @@ class InfoRespuestaController extends AbstractController
                                         "strRemitente"     => $strRemitente,
                                         "strDestinatario"  => $strDestinatario);
                                         error_log("1");
-            $objController    = new UtilitarioController();
-            error_log("2");
-            $objController->setContainer($this->container);
-            error_log("3");
-            $strMensajeError = $objController->enviaCorreo($arrayParametros);
-            error_log("4");
+            $strMensajeError = $this->utilitarioController->enviaCorreo($arrayParametros);
         }
         catch(\Exception $ex)
         {

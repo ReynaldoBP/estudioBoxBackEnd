@@ -27,8 +27,19 @@ use App\Entity\AdmiTipoCupon;
 use App\Entity\InfoCuponHistorial;
 use App\Entity\InfoCuponPromocionClt;
 use App\Entity\InfoPromocionHistorial;
+use App\Entity\InfoRespuestaDeficientes;
+use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoPlantilla;
+use Symfony\Component\Mailer\MailerInterface;
+
 class InfoRespuestaController extends AbstractController
 {
+    private $utilitarioController;
+
+    public function __construct(UtilitarioController $utilitarioController)
+    {
+        $this->utilitarioController = $utilitarioController;
+    }
     /**
      * @Rest\Post("/apiMovil/createRespuesta")
      * 
@@ -40,7 +51,10 @@ class InfoRespuestaController extends AbstractController
      * @version 1.0 30-12-2022
      *
      * @author Kevin Baque Puya
-     * @version 1.0 23-04-2023 - Se agrega Lógica para crear cupones.
+     * @version 1.1 23-04-2023 - Se agrega Lógica para crear cupones.
+     * 
+     * @author David Leon 
+     * @version 1.2 28-09-2023 - Se agrega Lógica para calificaciones bajas.
      *
      */
     public function createRespuesta(Request $objRequest)
@@ -60,6 +74,10 @@ class InfoRespuestaController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $strCuerpoCorreo      = "";
+        $strResPositiva       = "★";
+        $strNegativa          = "☆";
+        $strBanderaCorreo     = "";
         try
         {
             //Si existe correo, lo validamos
@@ -260,6 +278,37 @@ class InfoRespuestaController extends AbstractController
                 {
                     throw new \Exception("La pregunta: ".$objPregunta->getDESCRIPCION()." es obligatoria.");
                 }
+                //Validamos si la respuesta amerita envio de correo
+                $objRespuestaDef = $this->getDoctrine()->getRepository(InfoRespuestaDeficientes::class)
+                                        ->findOneBy(array("ESTADO"     => "ACTIVO",
+                                                          "EMPRESA_ID" => $objEmpresa->getId(),
+                                                          "RESPUESTA"  => $strRespuesta));
+                //Lógica de envío de correo en caso de que exista 1 respuesta deficiente se deberá enviar el correo completo con las preguntas.
+                if(is_object($objRespuestaDef) && !empty($objRespuestaDef))
+                {
+                    $strBanderaCorreo = "Si";
+                }
+                else
+                {
+                    if($strBanderaCorreo != "Si")
+                    {
+                        $strBanderaCorreo = "No";
+                    }
+                    
+                }
+                $strCuerpoCorreo .= '
+                        <tr>
+                            <td class="x_x_x_p1"
+                                style="direction:ltr; text-align:center; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:20px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                                <b>'.$objPregunta->getDESCRIPCION().'</b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="x_x_x_p1"
+                            style="direction:ltr; text-align:center; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:20px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                                '.$strRespuesta.'
+                            </td>
+                        </tr>';
                 $entityRespuesta = new InfoRespuesta();
                 $entityRespuesta->setRESPUESTA($strRespuesta);
                 $entityRespuesta->setPREGUNTAID($objPregunta);
@@ -270,6 +319,53 @@ class InfoRespuestaController extends AbstractController
                 $entityRespuesta->setFECREACION($objDatetimeActual);
                 $em->persist($entityRespuesta);
                 $em->flush();
+            }
+            if(!empty($strBanderaCorreo) && $strBanderaCorreo == "Si")
+            {
+                $strCuerpoCorreo .= '
+                                    <tr>
+                                        <td class="x_p1"
+                                            style="direction:ltr; text-align:justify; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:15px; line-height:26px; padding-bottom:20px; padding-top:7px">
+                                            <br><b>Sucursal:</b>'.$objSucursal->getNOMBRE().'<br>
+                                            <br><b>Area:</b>'.$objArea->getAREA().'<br>
+                                            <br><b>Para más información estadística, por favor has click <a href=\'https://panel.estudiobox.info/\' target="_blank">Aquí.</a> e ingrese con su usuario y contraseña a la plataforma.</b><br>
+                                        </td>
+                                    </tr>';
+                $objPlantilla     = $this->getDoctrine()
+                                         ->getRepository(InfoPlantilla::class)
+                                         ->findOneBy(array("DESCRIPCION" => "ENCUESTA_EMPRESA",
+                                                           "ESTADO"      => "ACTIVO"));
+                if(!empty($objPlantilla) && is_object($objPlantilla))
+                {
+                    $strMensajeCorreo   = stream_get_contents ($objPlantilla->getPLANTILLA());
+                    $strMensajeCorreo   = str_replace('strCuerpoCorreo',$strCuerpoCorreo,$strMensajeCorreo);
+                    $strAsunto          = "Calificacion de Encuesta Deficiente";
+                    $arrayParametros    = array("strAsunto"        => $strAsunto,
+                                                "strMensajeCorreo" => $strMensajeCorreo,
+                                                "strRemitente"     => 'notificaciones@estudiobox.info',
+                                                "strDestinatario"  => 'bespinel@massvision.tv');
+                    $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
+                    /*$arrayUsuarioEmp    = $this->getDoctrine()
+                                               ->getRepository(InfoUsuarioEmpresa::class)
+                                               ->findBy(array("EMPRESA_ID" => $objEmpresa->getId(),
+                                                              "ESTADO"     => "ACTIVO"));
+                    if(!empty($arrayUsuarioEmp) && is_array($arrayUsuarioEmp))
+                    {
+                        foreach($arrayUsuarioEmp as $arrayItemUsuarioEmp)
+                        {
+                            if(!empty($arrayItemUsuarioEmp->getUSUARIOID()->getCORREO()) && $arrayItemUsuarioEmp->getUSUARIOID()->getESTADO() == "ACTIVO"
+                               && $arrayItemUsuarioEmp->getUSUARIOID()->getNOTIFICACION() == "SI")
+                            {
+                                error_log($arrayItemUsuarioEmp->getUSUARIOID()->getCORREO());
+                                $arrayParametros    = array("strAsunto"        => $strAsunto,
+                                                            "strMensajeCorreo" => $strMensajeCorreo,
+                                                            "strRemitente"     => 'notificaciones@bitte.app',
+                                                            'strDestinatario'  => $arrayItemUsuarioEmp->getUSUARIOID()->getCORREO());
+                                $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
+                            }
+                        }
+                    }*/
+                }
             }
             if($em->getConnection()->isTransactionActive())
             {
@@ -365,32 +461,20 @@ class InfoRespuestaController extends AbstractController
         $arrayRequest     = json_decode($objRequest->getContent(),true);
         $arrayParametros  = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $strDestinatario  = $arrayParametros['strCorreo'] ? $arrayParametros['strCorreo']:'';
-        $strRemitente     = 'notificaciones@bitte.app';
+        $strRemitente     = 'notificaciones@estudiobox.info';
         $objResponse      = new Response;
         $arrayParametros  = array();
         $intStatus        = 200;
         $strMensaje       = "";
         try
         {
-            /*$objPlantilla  = $this->getDoctrine()
-                                  ->getRepository(InfoPlantilla::class)
-                                  ->findOneBy(array('DESCRIPCION'=>"ENCUESTA_CUPON"));
-            $strMensajeCorreo = stream_get_contents ($objPlantilla->getPLANTILLA());
-            $strCuerpoCorreo1   = "Acabas de ganar un cupón para participar en el sorteo mensual del Tenedor de Oro por comidas gratis de nuestros restaurantes participantes.";
-            $strMensajeCorreo   = str_replace('strCuerpoCorreo1',$strCuerpoCorreo1,$strMensajeCorreo);*/
             $strAsunto          = "Prueba Correo";
             $strMensajeCorreo   = "Ok";
             $arrayParametros    = array("strAsunto"        => $strAsunto,
                                         "strMensajeCorreo" => $strMensajeCorreo,
                                         "strRemitente"     => $strRemitente,
                                         "strDestinatario"  => $strDestinatario);
-                                        error_log("1");
-            $objController    = new UtilitarioController();
-            error_log("2");
-            $objController->setContainer($this->container);
-            error_log("3");
-            $strMensajeError = $objController->enviaCorreo($arrayParametros);
-            error_log("4");
+            $strMensajeError = $this->utilitarioController->enviaCorreo($arrayParametros);
         }
         catch(\Exception $ex)
         {

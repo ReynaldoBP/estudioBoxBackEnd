@@ -62,6 +62,13 @@ class InfoUsuario
     private $ESTADO;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="NOTIFICACION", type="string", length=2)
+     */
+    private $NOTIFICACION;
+
+    /**
      * @ORM\Column(type="string", length=255)
      */
     private $USR_CREACION;
@@ -185,6 +192,30 @@ class InfoUsuario
         $this->ESTADO = $ESTADO;
 
         return $this;
+    }
+
+    /**
+     * Set NOTIFICACION
+     *
+     * @param string $NOTIFICACION
+     *
+     * @return InfoUsuario
+     */
+    public function setNOTIFICACION($NOTIFICACION)
+    {
+        $this->NOTIFICACION = $NOTIFICACION;
+
+        return $this;
+    }
+
+    /**
+     * Get NOTIFICACION
+     *
+     * @return string
+     */
+    public function getNOTIFICACION()
+    {
+        return $this->NOTIFICACION;
     }
 
     public function getUSRCREACION(): ?string

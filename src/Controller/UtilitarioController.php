@@ -6,8 +6,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 class UtilitarioController extends AbstractController
 {
+    private $mailer;
+
+    public function __construct(MailerInterface $mailer)
+    {
+        $this->mailer = $mailer;
+    }
     /**
      * Documentación para la función 'enviaCorreo'
      * 
@@ -22,23 +30,23 @@ class UtilitarioController extends AbstractController
     public function enviaCorreo($arrayParametros)
     {
         error_reporting( error_reporting() & ~E_NOTICE );
-        error_log("1.1");
         $strAsunto        = $arrayParametros['strAsunto'] ? $arrayParametros['strAsunto']:'';
         $strMensajeCorreo = $arrayParametros['strMensajeCorreo'] ? $arrayParametros['strMensajeCorreo']:'';
         $strRemitente     = $arrayParametros['strRemitente'] ? $arrayParametros['strRemitente']:'';
         $strDestinatario  = $arrayParametros['strDestinatario'] ? $arrayParametros['strDestinatario']:'';
-        $strRutaImagen    = $arrayParametros['strRutaImagen']   ? $arrayParametros['strRutaImagen']:'';
         $strRespuesta     = 'Ok';
         try
         {
-            error_log("1.2");
-            $objMessage =  (new \Swift_Message())->setSubject($strAsunto)
+            /*$objMessage =  (new \Swift_Message())->setSubject($strAsunto)
                                                  ->setFrom($strRemitente)
                                                  ->setTo($strDestinatario)
-                                                 ->setBody($strMensajeCorreo, 'text/html');
-                                                 error_log("1.3");
-            $strRespuesta = $this->get('mailer')->send($objMessage);
-            error_log("1.4");
+                                                 ->setBody($strMensajeCorreo, 'text/html');*/
+
+            $objMessage = (new Email())->from($strRemitente)
+                                       ->to($strDestinatario)
+                                       ->subject($strAsunto)
+                                       ->html($strMensajeCorreo);
+            $strRespuesta = $this->mailer->send($objMessage);
         } catch (\Exception $e) {
            return  $e->getMessage();
         }

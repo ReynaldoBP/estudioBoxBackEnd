@@ -51,6 +51,7 @@ class InfoPerfilController extends AbstractController
         $strEstado              = $request->query->get("estado") ? $request->query->get("estado"):'';
         $arrayPerfil          = array();
         $strMensajeError        = "";
+        $strMensaje             = "";
         $intStatus              = 200;
         $objResponse            = new Response;
         try

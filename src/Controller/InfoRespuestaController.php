@@ -327,7 +327,7 @@ class InfoRespuestaController extends AbstractController
                                         <td class="x_p1"
                                             style="direction:ltr; text-align:justify; color:#000000; font-family:\'UberMoveText-Regular\',\'HelveticaNeue\',Helvetica,Arial,sans-serif; font-size:15px; line-height:26px; padding-bottom:20px; padding-top:7px">
                                             <br><b>Sucursal:</b>'.$objSucursal->getNOMBRE().'<br>
-                                            <br><b>Area:</b>'.$objArea->getAREA().'<br>
+                                            <br><b>Area    :</b>'.$objArea->getAREA().'<br>
                                             <br><b>Para más información estadística, por favor has click <a href=\'https://panel.estudiobox.info/\' target="_blank">Aquí.</a> e ingrese con su usuario y contraseña a la plataforma.</b><br>
                                         </td>
                                     </tr>';
@@ -340,12 +340,12 @@ class InfoRespuestaController extends AbstractController
                     $strMensajeCorreo   = stream_get_contents ($objPlantilla->getPLANTILLA());
                     $strMensajeCorreo   = str_replace('strCuerpoCorreo',$strCuerpoCorreo,$strMensajeCorreo);
                     $strAsunto          = "Calificacion de Encuesta Deficiente";
-                    $arrayParametros    = array("strAsunto"        => $strAsunto,
+                    /*$arrayParametros    = array("strAsunto"        => $strAsunto,
                                                 "strMensajeCorreo" => $strMensajeCorreo,
                                                 "strRemitente"     => 'notificaciones@estudiobox.info',
                                                 "strDestinatario"  => 'bespinel@massvision.tv');
-                    $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
-                    /*$arrayUsuarioEmp    = $this->getDoctrine()
+                    $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);*/
+                    $arrayUsuarioEmp    = $this->getDoctrine()
                                                ->getRepository(InfoUsuarioEmpresa::class)
                                                ->findBy(array("EMPRESA_ID" => $objEmpresa->getId(),
                                                               "ESTADO"     => "ACTIVO"));
@@ -359,12 +359,12 @@ class InfoRespuestaController extends AbstractController
                                 error_log($arrayItemUsuarioEmp->getUSUARIOID()->getCORREO());
                                 $arrayParametros    = array("strAsunto"        => $strAsunto,
                                                             "strMensajeCorreo" => $strMensajeCorreo,
-                                                            "strRemitente"     => 'notificaciones@bitte.app',
+                                                            "strRemitente"     => "notificaciones@estudiobox.info",
                                                             'strDestinatario'  => $arrayItemUsuarioEmp->getUSUARIOID()->getCORREO());
                                 $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
                             }
                         }
-                    }*/
+                    }
                 }
             }
             if($em->getConnection()->isTransactionActive())
@@ -372,7 +372,7 @@ class InfoRespuestaController extends AbstractController
                 $em->getConnection()->commit();
                 $em->getConnection()->close();
             }
-            $strMensaje = "Gracias por tu respuesta";
+            $strMensaje = "Gracias por contestar nuestra Encuesta";
             if(!empty($strCupon))
             {
                 $strMensaje = "Promoción: ".$strDescripcionPromocion."\n".

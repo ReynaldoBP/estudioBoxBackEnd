@@ -164,7 +164,7 @@ class InfoReportesController extends Controller
         $strTitulo              = $request->query->get("titulo") ? $request->query->get("titulo"):'';
         $strEstado              = $request->query->get("estado") ? $request->query->get("estado"):'';
         $strUsuarioCreacion     = $request->query->get("usuarioCreacion") ? $request->query->get("usuarioCreacion"):'';
-        $strRuta                = "https://panel.estudiobox.info/:8888"."/";
+        $strRuta                = "https://panel.estudiobox.info:8888"."/";
         $arrayReporte           = array();
         $strMensajeError        = '';
         $strStatus              = 200;

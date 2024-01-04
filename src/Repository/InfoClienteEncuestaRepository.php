@@ -824,6 +824,9 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
         $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
+        $intPagActual       = $arrayParametros['intPagActual'] ? $arrayParametros['intPagActual']:'';
+        $intLimitePag       = $arrayParametros['intLimitePag'] ? $arrayParametros['intLimitePag']:'';
+        $intTotalRegistros  = ($intPagActual-1)*$intLimitePag;
         $arrayRespuesta     = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -870,6 +873,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                 EXTRACT(YEAR FROM A.FE_CREACION ) = :intAnio 
                                 AND A.ESTADO in ('ACTIVO','PENDIENTE','ELIMINADO')
                                 AND EXTRACT(MONTH FROM A.FE_CREACION ) = :intMes ";
+            $strLimit       = " LIMIT ".$intLimitePag." OFFSET ".$intTotalRegistros;
             if(!empty($intIdSucursal))
             {
                 $strWhere   .= " AND SUB_ISU.ID_SUCURSAL = :intIdSucursal ";
@@ -906,9 +910,15 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('PROMEDIO', 'strPromedio', 'string');
             $objRsmBuilder->addScalarResult('COMENTARIO', 'strComentario', 'string');
             $objRsmBuilder->addScalarResult('ES_MENOR_3', 'strEsmenor3', 'string');
-            $strSql       = $strSelect.$strFrom.$strWhere.$strOrderBy;
+            $objRsmBuilder->addScalarResult('TOTAL', 'intTotalResultado', 'integer');
+            $strSql       = $strSelect.$strFrom.$strWhere.$strOrderBy.$strLimit;
             $objQuery->setSQL($strSql);
             $arrayRespuesta['resultados'] = $objQuery->getResult();
+            // Obtenemos el total de la data
+            $strSql       = " Select count(*) as TOTAL From (Select A.ID_CLT_ENCUESTA ".$strFrom.$strWhere.") t1";
+            $objQuery->setSQL($strSql);
+            $arrayTotalRespuesta          = $objQuery->getOneOrNullResult();
+            $arrayRespuesta['totalResultado'] = $arrayTotalRespuesta['intTotalResultado'];
         }
         catch(\Exception $ex)
         {

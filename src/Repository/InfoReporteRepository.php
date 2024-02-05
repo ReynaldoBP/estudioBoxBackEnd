@@ -65,6 +65,7 @@ class InfoReporteRepository extends ServiceEntityRepository
         $strTitulo          = $arrayParametros['strTitulo'] ? $arrayParametros['strTitulo']:'';
         $strEstado          = $arrayParametros['strEstado'] ? $arrayParametros['strEstado']:array('ACTIVO','INACTIVO','ELIMINADO');
         $strRuta            = $arrayParametros['strRuta'] ? $arrayParametros['strRuta']:'';
+        $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $arrayPublicidad    = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -81,21 +82,26 @@ class InfoReporteRepository extends ServiceEntityRepository
                                 AND IR.EMPRESA_ID = IE.ID_EMPRESA ";
             if(!empty($intIdReporte))
             {
-            $strWhere .= " AND IR.ID_REPORTE =:ID_REPORTE ";
-            $objQuery->setParameter("ID_REPORTE", $intIdReporte);
+                $strWhere .= " AND IR.ID_REPORTE =:ID_REPORTE ";
+                $objQuery->setParameter("ID_REPORTE", $intIdReporte);
+            }
+            if(!empty($intIdEmpresa))
+            {
+                $strWhere .= " AND IE.ID_EMPRESA =:ID_EMPRESA ";
+                $objQuery->setParameter("ID_EMPRESA", $intIdEmpresa);
             }
             if (!empty($strRuta)) {
                 $objQuery->setParameter("strRuta", $strRuta);
             }
             if(!empty($strTitulo))
             {
-            $strWhere .= " AND lower(IR.TITULO) like lower(:TITULO) ";
-            $objQuery->setParameter("TITULO", '%' . trim($strTitulo) . '%');
+                $strWhere .= " AND lower(IR.TITULO) like lower(:TITULO) ";
+                $objQuery->setParameter("TITULO", '%' . trim($strTitulo) . '%');
             }
             if(!empty($strEstado))
             {
-            $strWhere .= " AND IR.ESTADO in (:ESTADO) ";
-            $objQuery->setParameter("ESTADO",$strEstado);
+                $strWhere .= " AND IR.ESTADO in (:ESTADO) ";
+                $objQuery->setParameter("ESTADO",$strEstado);
             }
             $objRsmBuilder->addScalarResult('ID_REPORTE', 'ID_REPORTE', 'string');
             $objRsmBuilder->addScalarResult('TITULO', 'TITULO', 'string');

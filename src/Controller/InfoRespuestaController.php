@@ -397,6 +397,76 @@ class InfoRespuestaController extends AbstractController
 
 
     /**
+     * @Rest\Post("/apiWeb/descargarRespuesta")
+     *
+     * Documentación para la función 'descargarRespuesta'.
+     *
+     * Función que permite descargar las respuestas de los clientes
+     * 
+     * @author Kevin Baque
+     * @version 1.0 05-02-2024
+     * 
+     * @return array  $objResponse
+     */
+    public function descargarRespuestaAction(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            error_log( print_r($arrayParametros, TRUE) );
+            $objPlantilla     = $this->getDoctrine()
+                                     ->getRepository(InfoPlantilla::class)
+                                     ->findOneBy(array("DESCRIPCION" => "MSP",
+                                                       "ESTADO"      => "ACTIVO"));
+                if(!empty($objPlantilla) && is_object($objPlantilla))
+                {
+                    $strHtml   = stream_get_contents ($objPlantilla->getPLANTILLA());
+                    //$strHtml   = str_replace('"','\"',$strHtml);
+
+                    error_log($strHtml);
+                    //$strHtml   = '<!DOCTYPE html><html lang=\"es\"><head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Reporte Encuesta</title> <style> /* Agrega estilos CSS según sea necesario */ body { font-family: Arial, sans-serif; margin: 20px; } header { text-align: center; } header img { width: 100px; /* Ajusta el tamaño de la imagen según tus necesidades */ height: auto; } .question { margin-bottom: 10px; } .encabezado { margin-bottom: 1px; line-height: 0.2; /* Ajusta el espacio entre líneas */ } table { border-collapse: collapse; width: 100%; border-spacing: 0; /* Elimina el espacio entre celdas de la tabla */ } th, td { border: 1px solid #ddd; padding: 5px; /* Ajusta el espaciado interno */ text-align: left; } th { text-align: center; } </style></head><body> <div class=\"encabezado\"> <header> <img src=\"https://imagenes-encuestas-estudiobox.s3.amazonaws.com/encuestas-rendon/mspLogo.png\" alt=\"Logo de la encuesta\"> <h4>Ministerio de Salud Pública</h4> </header> <!-- Pregunta Individual --> <h3>Anexo 4: Encuesta de satisfacción de atención al paciente:</h3> <br><h3 align=\"center\">ENCUESTA DE SATISFACCIÓN</h3> </div> <div> Estimado paciente su opinión es muy importante y nos ayudará a mejorar la atención de esta casa de salud; le agradecemos llene la encuesta. </div> <div class=\"question\"> <br>NOMBRE DE LA UNIDAD DE SALUD DONDE SE REALIZÓ LA ENCUESTA<br><br> QUIÉN CONTESTA:<br><br> DATOS DEL PACIENTE:<br><br> INSTITUCIÓN A LA QUE PERTENECE:<br><br> EL TIEMPO QUE TUVO QUE ESPERAR HASTA QUE LE ASIGNEN CAMA FUE<br><br> MINUTOS: <br><br> CÓMO CALIFICA EL TRATO QUE RECIBIÓ DEL PERSONAL DE LA CASA DE SALUD <div class=\"question\"> <table> <thead> <tr> <th>TRATO</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALA</th> </tr> </thead> <tbody> <tr> <td>MEDICO TRATANTE</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>MEDICO RESIDENTE</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ENFERMERAS</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ADMINISTRATIVOS</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> ¿CÓMO FUE LA INFORMACIÓN QUE RECIBIÓ? <div class=\"question\"> <table> <thead> <tr> <th>INFORMACIÓN RECIBIDA</th> <th>SI</th> <th>NO</th> </tr> </thead> <tbody> <tr> <td>LE COMUNICARON SOBRE SUS DEBERES Y DERECHOS COMO PACIENTE</td> <td></td> <td></td> </tr> <tr> <td>CONOCE EL NOMBRE DE SU MÉDICO TRATANTE</td> <td></td> <td></td> </tr> <tr> <td>LE DIERON INFORMACIÓN CLARA SOBRE PROCEDIMIENTO QUE LE REALIZARÍAN</td> <td></td> <td></td> </tr> <tr> <td>USTED DIÓ SU CONSENTIMIENTO PARA LA REALIZACIÓN DE LOS PROCEDIMIENTOS</td> <td></td> <td></td> </tr> <tr> <td>LAS EXPLICACIONES QUE LE DIÓ EL MÉDICO SATISFACIERON SUS INQUIETUDES</td> <td></td> <td></td> </tr> <tr> <td>CUANDO SOLICITÓ AYUDA LA RESPUESTA FUE OPORTUNA</td> <td></td> <td></td> </tr> <tr> <td>LE INFORMARON LOS CUIDADOS A SEGUIR EN CASA</td> <td></td> <td></td> </tr> <tr> <td>LE INFORMARON CUANDO Y DONDE DEBE REGRESAR A CONTROL</td> <td></td> <td></td> </tr> <tr> <td>LE PIDIERON PAGO POR ALGUN SERVICIO MIENTRAS ESTUVO HOSPITALIZADO</td> <td></td> <td></td> </tr> <tr> <td>RECOMENDARA ESTA CASA DE SALUD</td> <td></td> <td></td> </tr> </tbody> </table> </div> SI LA RESPUESTA ES NO POR FAVOR DIGA POR QUE<br><br> EN GENERAL COMO CALIFICA EL CONFORT Y CALIDAD DE LOS SERVICIOS GENERALES <div class=\"question\"> <table> <thead> <tr> <th>SERVICIO</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALO</th> </tr> </thead> <tbody> <tr> <td>ALIMENTACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>LIMPIEZA</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ILUMINACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>SEÑALIZACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> COMO CALIFICA EN GENERAL LA ATENCIÓN RECIBIDA <div class=\"question\"> <table> <thead> <tr> <th>ATENCIÓN</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALO</th> </tr> </thead> <tbody> <tr> <td>ALIMENTACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> FECHA: </div></body></html>';
+                    /*$strHtml ="<!DOCTYPE html>
+                    <html lang=\"es\">
+                    
+                    <head>
+                        <meta charset=\"UTF-8\">
+                        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                        <title>Ejemplo HTML para PDF</title>
+                    </head>
+                    
+                    <body>
+                        <h1>Hola, este es un ejemplo de HTML para PDF</h1>
+                        <p>Este es un párrafo de ejemplo.</p>
+                        <ul>
+                            <li>Elemento de lista 1</li>
+                            <li>Elemento de lista 2</li>
+                            <li>Elemento de lista 3</li>
+                        </ul>
+                        <p>¡Gracias por probar!</p>
+                    </body>
+                    
+                    </html>";*/
+                }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => $strHtml,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
      * @Rest\Post("/apiWeb/getRespuesta")
      * 
      * Documentación para la función 'getRespuesta'.

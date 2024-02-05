@@ -7,11 +7,17 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManager;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\View\View;
 use App\Entity\InfoReporte;
 use App\Entity\InfoEmpresa;
 use App\Entity\InfoSucursal;
 use App\Entity\InfoArchivo;
 use App\Entity\InfoReporteArchivo;
+use App\Entity\InfoUsuario;
+use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\AdmiTipoRol;
 
 class InfoReportesController extends Controller
 {
@@ -147,7 +153,7 @@ class InfoReportesController extends Controller
     }
 
      /**
-     * @Route("/getReporte")
+     * @Rest\Post("/apiWeb/getReporte")
      *
      * Documentación para la función 'getReporte'
      * Método encargado de retornar todos los reportes según los parámetros recibidos.
@@ -157,13 +163,15 @@ class InfoReportesController extends Controller
      * 
      * @return array  $objResponse
      */
-    public function getReporteAction(Request $request)
+    public function getReporteAction(Request $objRequest)
     {
         error_reporting( error_reporting() & ~E_NOTICE );
-        $intIdReporte        = $request->query->get("idReporte") ? $request->query->get("idReporte"):'';
-        $strTitulo              = $request->query->get("titulo") ? $request->query->get("titulo"):'';
-        $strEstado              = $request->query->get("estado") ? $request->query->get("estado"):'';
-        $strUsuarioCreacion     = $request->query->get("usuarioCreacion") ? $request->query->get("usuarioCreacion"):'';
+        $arrayRequest           = json_decode($objRequest->getContent(),true);
+        $arrayParametros        = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario           = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
+        $intIdReporte           = isset($arrayParametros["intIdReporte"]) && !empty($arrayParametros["intIdReporte"]) ? $arrayParametros["intIdReporte"]:"";
+        $strTitulo              = isset($arrayParametros["strTitulo"]) && !empty($arrayParametros["strTitulo"]) ? $arrayParametros["strTitulo"]:"";
+        $strEstado              = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:"";
         $strRuta                = "https://panel.estudiobox.info:8888"."/";
         $arrayReporte           = array();
         $strMensajeError        = '';
@@ -175,6 +183,37 @@ class InfoReportesController extends Controller
                                      'strTitulo'    => $strTitulo,
                                      'strEstado'    => $strEstado,
                                      'strRuta'      => $strRuta);
+            if(!empty($intIdUsuario))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
             $arrayReporte = (array) $this->getDoctrine()
                                          ->getRepository(InfoREPORTE::class)
                                          ->getReporteCriterio($arrayParametros);
@@ -192,6 +231,7 @@ class InfoReportesController extends Controller
         error_log('netx query'.$strMensajeError);
         $objResponse->setContent(json_encode(array('status'    => $strStatus,
                                                    'resultado' => $arrayReporte,
+                                                   'parametro'=> $arrayParametros,
                                                    'succes'    => true)));
         $objResponse->headers->set('Access-Control-Allow-Origin', '*');
         return $objResponse;

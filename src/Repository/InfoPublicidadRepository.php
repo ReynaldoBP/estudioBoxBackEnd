@@ -103,7 +103,7 @@ class InfoPublicidadRepository extends ServiceEntityRepository
             $strWhere .= " AND IE.ID_EMPRESA =:ID_EMPRESA ";
             $objQuery->setParameter("ID_EMPRESA", $intIdEmpresa);
             }
-            $objRsmBuilder->addScalarResult('ID_PUBLICIDAD', 'ID_PUBLICIDAD', 'string');
+            $objRsmBuilder->addScalarResult('ID_PUBLICIDAD', 'ID_PUBLICIDAD', 'integer');
             $objRsmBuilder->addScalarResult('TITULO', 'TITULO', 'string');
             $objRsmBuilder->addScalarResult('ESTADO', 'ESTADO', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE_COMERCIAL', 'NOMBRE_COMERCIAL', 'string');

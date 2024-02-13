@@ -317,9 +317,9 @@ class InfoPublicidadController extends Controller
     }
 
     /**
-     * @Rest\Post("/apiMovil/getImagenByPublicidadAction")
+     * @Rest\Post("/apiMovil/getPublicidad")
      *
-     * Documentación para la función 'getImagenByPublicidadAction'
+     * Documentación para la función 'getPublicidad'
      * Método encargado de retornar todos las publicaciones según los parámetros recibidos.
      * 
      * @author David Leon
@@ -327,7 +327,7 @@ class InfoPublicidadController extends Controller
      * 
      * @return array  $objResponse
      */
-    public function getImagenByPublicidadAction(Request $objRequest)
+    public function getPublicidadMovilAction(Request $objRequest)
     {
         error_reporting( error_reporting() & ~E_NOTICE );
         $arrayRequest           = json_decode($objRequest->getContent(),true);
@@ -340,7 +340,7 @@ class InfoPublicidadController extends Controller
         $strRuta                = "https://panel.estudiobox.info:8888"."/";
         $arrayPublicidad        = array();
         $strMensajeError        = '';
-        $strStatus              = 200;
+        $intStatus              = 200;
         $objResponse            = new Response;
         try
         {
@@ -369,14 +369,17 @@ class InfoPublicidadController extends Controller
                                     'intIdEncuesta'      => $intIdEncuesta,
                                     'strEstado'          => $strEstado,
                                     'strRuta'            => $strRuta,
-                                    'intIdEmpresa'       => $intIdEmpresa);             
+                                    'intIdEmpresa'       => $intIdEmpresa);
             $arrayDatosPublicidad = (array) $this->getDoctrine()
                                             ->getRepository(InfoPUBLICIDAD::class)
                                             ->getImagenCriterio($arrayParametros);
             if(isset($arrayDatosPublicidad['error']) && !empty($arrayDatosPublicidad['error']))
             {
-                $strStatus  = 204;
                 throw new \Exception($arrayDatosPublicidad['error']);
+            }
+            if(count($arrayDatosPublicidad["resultados"]) == 0)
+            {
+                throw new \Exception("No existen datos con los parámetros enviados.");
             }
             foreach ($arrayDatosPublicidad['resultados'] as $arrayPublicidad) {
                 $arrayParametrosArc = array('intIdPublicidad'   => $arrayPublicidad['ID_PUBLICIDAD'],
@@ -386,7 +389,7 @@ class InfoPublicidadController extends Controller
                                             ->getDatosImagen($arrayParametrosArc);
                 if(isset($arrayPublicidadArchivo['error']) && !empty($arrayPublicidadArchivo['error']))
                 {
-                    $strStatus  = 204;
+                    $intStatus  = 204;
                     throw new \Exception($arrayPublicidadArchivo['error']);
                 }
                 foreach ($arrayPublicidadArchivo['resultados'] as $arrayArchivo) {
@@ -399,7 +402,7 @@ class InfoPublicidadController extends Controller
                     }
                 }  
                 
-                $arrayPublicidadFinal[] = array(
+                $arrayPublicidadFinal = array(
                     'intIdPublicidad' =>      $arrayPublicidad['ID_PUBLICIDAD'],
                     'strTitulo'   =>          $arrayPublicidad['TITULO'],
                     'strEstado'   =>          $arrayPublicidad['ESTADO'],
@@ -415,11 +418,12 @@ class InfoPublicidadController extends Controller
         }
         catch(\Exception $ex)
         {
+            $intStatus  = 204;
             $strMensajeError = $ex->getMessage();
         }
         $arrayPublicidadFinal['error'] = $strMensajeError;
-        $objResponse->setContent(json_encode(array('intStatus'      => $strStatus,
-                                                   'arrayResultado' => $arrayPublicidadFinal,
+        $objResponse->setContent(json_encode(array('intStatus'      => $intStatus,
+                                                   'arrayPublicidad' => $arrayPublicidadFinal,
                                                    'strMensaje'     => $strMensajeError)));
         $objResponse->headers->set('Access-Control-Allow-Origin', '*');
         return $objResponse;

@@ -40,6 +40,11 @@ class InfoClienteEncuesta
     private $ENCUESTA_ID;
 
     /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $FIRMA;
+
+    /**
      * @ORM\Column(type="string", length=50)
      */
     private $ESTADO;
@@ -114,6 +119,18 @@ class InfoClienteEncuesta
     public function setENCUESTAID(\App\Entity\InfoEncuesta $ENCUESTA_ID = null)
     {
         $this->ENCUESTA_ID = $ENCUESTA_ID;
+
+        return $this;
+    }
+
+    public function getFirma(): ?string
+    {
+        return $this->FIRMA;
+    }
+
+    public function setFirma(string $FIRMA): self
+    {
+        $this->FIRMA = $FIRMA;
 
         return $this;
     }

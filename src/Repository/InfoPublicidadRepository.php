@@ -103,7 +103,7 @@ class InfoPublicidadRepository extends ServiceEntityRepository
             $strWhere .= " AND IE.ID_EMPRESA =:ID_EMPRESA ";
             $objQuery->setParameter("ID_EMPRESA", $intIdEmpresa);
             }
-            $objRsmBuilder->addScalarResult('ID_PUBLICIDAD', 'ID_PUBLICIDAD', 'string');
+            $objRsmBuilder->addScalarResult('ID_PUBLICIDAD', 'ID_PUBLICIDAD', 'integer');
             $objRsmBuilder->addScalarResult('TITULO', 'TITULO', 'string');
             $objRsmBuilder->addScalarResult('ESTADO', 'ESTADO', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE_COMERCIAL', 'NOMBRE_COMERCIAL', 'string');
@@ -149,6 +149,7 @@ class InfoPublicidadRepository extends ServiceEntityRepository
             $strFrom        = "FROM INFO_PUBLICIDAD IP, INFO_ARCHIVO IA, INFO_PUBLICIDAD_ARCHIVO IPA ";
             $strWhere       = "WHERE IP.ID_PUBLICIDAD = IPA.PUBLICIDAD_ID
                                 AND IPA.ARCHIVO_ID = IA.ID_ARCHIVO";
+            $strOrderBy     = " ORDER BY RAND() ";
             if(!empty($intIdPublicidad))
             {
             $strWhere .= " AND IP.ID_PUBLICIDAD =:ID_PUBLICIDAD ";
@@ -161,7 +162,7 @@ class InfoPublicidadRepository extends ServiceEntityRepository
             $objRsmBuilder->addScalarResult('UBICACION', 'UBICACION', 'string');
             $objRsmBuilder->addScalarResult('UBICACION_ARCHIVO', 'UBICACION_ARCHIVO', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE_ARCHIVO', 'NOMBRE_ARCHIVO', 'string');
-            $strSql       = $strSelect.$strFrom.$strWhere;
+            $strSql       = $strSelect.$strFrom.$strWhere.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayPublicidad['resultados'] = $objQuery->getResult();
             

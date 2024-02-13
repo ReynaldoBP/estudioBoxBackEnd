@@ -38,7 +38,12 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strOrderBy          = "";
         try
         {
-            $strSelect  = " SELECT IE.*,IEM.NOMBRE_COMERCIAL,IA.AREA,ISU.NOMBRE AS SUCURSAL ";
+            // si multiplico por 1000 equivale a segundos
+            // 5 * 60 * 1000 =300000 // 5 minutos de inactividad
+            //COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA) * 60000,300000) AS TIEMPO ";
+            //COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA) * 1000,30000) AS TIEMPO ";
+            $strSelect  = " SELECT IE.*,IEM.NOMBRE_COMERCIAL,IA.AREA,ISU.NOMBRE AS SUCURSAL,
+                            COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA AND IPU.ESTADO='ACTIVO') * 60000,300000) AS TIEMPO ";
             $strFrom    = " FROM INFO_ENCUESTA IE 
                             JOIN INFO_AREA IA ON IE.AREA_ID=IA.ID_AREA
                             JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=IA.SUCURSAL_ID
@@ -98,6 +103,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("DESCRIPCION", "strDescripcion", "string");
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");
             $objRsmBuilder->addScalarResult("NOMBRE_COMERCIAL", "strEmpresa", "string");
+            $objRsmBuilder->addScalarResult("PERMITE_FIRMA", "strPermiteFirma", "string");
             $objRsmBuilder->addScalarResult("AREA", "strArea", "string");
             $objRsmBuilder->addScalarResult("SUCURSAL", "strSucursal", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
@@ -105,6 +111,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");
             $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");
             $objRsmBuilder->addScalarResult("FE_MODIFICACION", "strFeModificacion", "string");
+            $objRsmBuilder->addScalarResult("TIEMPO", "intTiempo", "integer");
             $strSql  = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();

@@ -46,6 +46,11 @@ class InfoEncuesta
     private $TITULO;
 
     /**
+     * @ORM\Column(type="string", length=2)
+     */
+    private $PERMITE_FIRMA;
+
+    /**
      * @ORM\Column(type="string", length=50)
      */
     private $ESTADO;
@@ -154,6 +159,18 @@ class InfoEncuesta
     public function getTITULO()
     {
         return $this->TITULO;
+    }
+
+    public function getPERMITE_FIRMA(): ?string
+    {
+        return $this->PERMITE_FIRMA;
+    }
+
+    public function setPERMITE_FIRMA(string $PERMITE_FIRMA): self
+    {
+        $this->PERMITE_FIRMA = $PERMITE_FIRMA;
+
+        return $this;
     }
 
     public function getESTADO(): ?string

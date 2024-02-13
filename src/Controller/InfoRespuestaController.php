@@ -56,6 +56,9 @@ class InfoRespuestaController extends AbstractController
      * @author David Leon 
      * @version 1.2 28-09-2023 - Se agrega Lógica para calificaciones bajas.
      *
+     * @author Kevin Baque Puya
+     * @version 1.3 13-02-2024 - Se agrega guardado de firma.
+     *
      */
     public function createRespuesta(Request $objRequest)
     {
@@ -67,6 +70,7 @@ class InfoRespuestaController extends AbstractController
         $strEdad              = isset($arrayData["strEdad"]) && !empty($arrayData["strEdad"]) ? $arrayData["strEdad"]:"SIN EDAD";
         $strGenero            = isset($arrayData["strGenero"]) && !empty($arrayData["strGenero"]) ? $arrayData["strGenero"]:"SIN GENERO";
         $arrayPregunta        = isset($arrayData["arrayPregunta"]) && !empty($arrayData["arrayPregunta"]) ? $arrayData["arrayPregunta"]:array();
+        $strFirma             = isset($arrayData["strFirma"]) && !empty($arrayData["strFirma"]) ? $arrayData["strFirma"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"";
         $objResponse          = new Response;
@@ -120,10 +124,19 @@ class InfoRespuestaController extends AbstractController
             {
                 $entityCliente=$objCliente;
             }
+            //Validamos firma, debido a que si la encuesta permite firma, debe venir firmada
+            if($objEncuesta->getPERMITE_FIRMA()=="Si" && empty($strFirma))
+            {
+                throw new \Exception("Estimado usuario, la firma es un campo obligatorio.");
+            }
             //Creamos la relación entre la encuesta y el cliente
             $entityCltEncuesta = new InfoClienteEncuesta();
             $entityCltEncuesta->setCLIENTEID($entityCliente);
             $entityCltEncuesta->setENCUESTAID($objEncuesta);
+            if(!empty($strFirma))
+            {
+                $entityCltEncuesta->setFirma($strFirma);
+            }
             $entityCltEncuesta->setESTADO("ACTIVO");
             $entityCltEncuesta->setUSRCREACION($strUsrSesion);
             $entityCltEncuesta->setFECREACION($objDatetimeActual);
@@ -419,40 +432,96 @@ class InfoRespuestaController extends AbstractController
         $strMensaje           = "";
         try
         {
-            error_log( print_r($arrayParametros, TRUE) );
+            //Mejorar la logica de programación, debido a que el código está para la encuesta MSP
+            $objCltEncuesta = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                   ->find($arrayParametros["intIdCltEncuesta"]);
+            if(empty($objCltEncuesta) || !is_object($objCltEncuesta))
+            {
+                throw new \Exception("No existe encuesta con los parámetros enviados");
+            }
+            $objCliente     = $this->getDoctrine()->getRepository(InfoCliente::class)
+                                   ->find($objCltEncuesta->getCLIENTEID());
+            if(empty($objCliente) || !is_object($objCliente))
+            {
+                throw new \Exception("No existe cliente con los parámetros enviados");
+            }
+            $strEdadClt = "Sin Edad";
+            if($objCliente->getEDAD()!="SIN EDAD")
+            {
+                $strEdadClt = intval(date("Y"))-intval($objCliente->getEDAD());
+            }
+            $arrayDataRespuesta = $this->getDoctrine()->getRepository(InfoRespuesta::class)
+                                       ->getRespuesta($arrayParametros);
+            if(!empty($arrayDataRespuesta["error"]))
+            {
+                throw new \Exception($arrayDataRespuesta["error"]);
+            }
+            //Aquí a futuro, se deberá crear otra tabla que relacione la encuesta con la plantilla
             $objPlantilla     = $this->getDoctrine()
                                      ->getRepository(InfoPlantilla::class)
                                      ->findOneBy(array("DESCRIPCION" => "MSP",
                                                        "ESTADO"      => "ACTIVO"));
-                if(!empty($objPlantilla) && is_object($objPlantilla))
+            //En base al tipo de respuesta se mejora el html
+            $arrayRespuestasSiNo   = array(64,65,66,67,68,69,70,71,72,689);
+            $arrayRespuestasBuenas = array(60,61,62,63,73,74,75,76);
+            if(!empty($arrayDataRespuesta)&&!empty($objPlantilla) && is_object($objPlantilla))
+            {
+                $strHtml   = stream_get_contents ($objPlantilla->getPLANTILLA());
+                $strHtml   = str_replace('strFirma',$objCltEncuesta->getFirma(),$strHtml);
+                $strHtml   = str_replace('strFecha',date('d-m-Y H:i:s'),$strHtml);
+                $strHtml   = str_replace('str_sexo',ucwords(strtolower($objCliente->getGENERO())),$strHtml);
+                $strHtml   = str_replace('str_edad',$strEdadClt,$strHtml);
+                foreach($arrayDataRespuesta["resultados"] as $arrayItemRespuesta)
                 {
-                    $strHtml   = stream_get_contents ($objPlantilla->getPLANTILLA());
-                    //$strHtml   = str_replace('"','\"',$strHtml);
-
-                    error_log($strHtml);
-                    //$strHtml   = '<!DOCTYPE html><html lang=\"es\"><head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Reporte Encuesta</title> <style> /* Agrega estilos CSS según sea necesario */ body { font-family: Arial, sans-serif; margin: 20px; } header { text-align: center; } header img { width: 100px; /* Ajusta el tamaño de la imagen según tus necesidades */ height: auto; } .question { margin-bottom: 10px; } .encabezado { margin-bottom: 1px; line-height: 0.2; /* Ajusta el espacio entre líneas */ } table { border-collapse: collapse; width: 100%; border-spacing: 0; /* Elimina el espacio entre celdas de la tabla */ } th, td { border: 1px solid #ddd; padding: 5px; /* Ajusta el espaciado interno */ text-align: left; } th { text-align: center; } </style></head><body> <div class=\"encabezado\"> <header> <img src=\"https://imagenes-encuestas-estudiobox.s3.amazonaws.com/encuestas-rendon/mspLogo.png\" alt=\"Logo de la encuesta\"> <h4>Ministerio de Salud Pública</h4> </header> <!-- Pregunta Individual --> <h3>Anexo 4: Encuesta de satisfacción de atención al paciente:</h3> <br><h3 align=\"center\">ENCUESTA DE SATISFACCIÓN</h3> </div> <div> Estimado paciente su opinión es muy importante y nos ayudará a mejorar la atención de esta casa de salud; le agradecemos llene la encuesta. </div> <div class=\"question\"> <br>NOMBRE DE LA UNIDAD DE SALUD DONDE SE REALIZÓ LA ENCUESTA<br><br> QUIÉN CONTESTA:<br><br> DATOS DEL PACIENTE:<br><br> INSTITUCIÓN A LA QUE PERTENECE:<br><br> EL TIEMPO QUE TUVO QUE ESPERAR HASTA QUE LE ASIGNEN CAMA FUE<br><br> MINUTOS: <br><br> CÓMO CALIFICA EL TRATO QUE RECIBIÓ DEL PERSONAL DE LA CASA DE SALUD <div class=\"question\"> <table> <thead> <tr> <th>TRATO</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALA</th> </tr> </thead> <tbody> <tr> <td>MEDICO TRATANTE</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>MEDICO RESIDENTE</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ENFERMERAS</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ADMINISTRATIVOS</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> ¿CÓMO FUE LA INFORMACIÓN QUE RECIBIÓ? <div class=\"question\"> <table> <thead> <tr> <th>INFORMACIÓN RECIBIDA</th> <th>SI</th> <th>NO</th> </tr> </thead> <tbody> <tr> <td>LE COMUNICARON SOBRE SUS DEBERES Y DERECHOS COMO PACIENTE</td> <td></td> <td></td> </tr> <tr> <td>CONOCE EL NOMBRE DE SU MÉDICO TRATANTE</td> <td></td> <td></td> </tr> <tr> <td>LE DIERON INFORMACIÓN CLARA SOBRE PROCEDIMIENTO QUE LE REALIZARÍAN</td> <td></td> <td></td> </tr> <tr> <td>USTED DIÓ SU CONSENTIMIENTO PARA LA REALIZACIÓN DE LOS PROCEDIMIENTOS</td> <td></td> <td></td> </tr> <tr> <td>LAS EXPLICACIONES QUE LE DIÓ EL MÉDICO SATISFACIERON SUS INQUIETUDES</td> <td></td> <td></td> </tr> <tr> <td>CUANDO SOLICITÓ AYUDA LA RESPUESTA FUE OPORTUNA</td> <td></td> <td></td> </tr> <tr> <td>LE INFORMARON LOS CUIDADOS A SEGUIR EN CASA</td> <td></td> <td></td> </tr> <tr> <td>LE INFORMARON CUANDO Y DONDE DEBE REGRESAR A CONTROL</td> <td></td> <td></td> </tr> <tr> <td>LE PIDIERON PAGO POR ALGUN SERVICIO MIENTRAS ESTUVO HOSPITALIZADO</td> <td></td> <td></td> </tr> <tr> <td>RECOMENDARA ESTA CASA DE SALUD</td> <td></td> <td></td> </tr> </tbody> </table> </div> SI LA RESPUESTA ES NO POR FAVOR DIGA POR QUE<br><br> EN GENERAL COMO CALIFICA EL CONFORT Y CALIDAD DE LOS SERVICIOS GENERALES <div class=\"question\"> <table> <thead> <tr> <th>SERVICIO</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALO</th> </tr> </thead> <tbody> <tr> <td>ALIMENTACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>LIMPIEZA</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>ILUMINACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> <tr> <td>SEÑALIZACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> COMO CALIFICA EN GENERAL LA ATENCIÓN RECIBIDA <div class=\"question\"> <table> <thead> <tr> <th>ATENCIÓN</th> <th>MUY BUENO</th> <th>BUENO</th> <th>REGULAR</th> <th>MALO</th> </tr> </thead> <tbody> <tr> <td>ALIMENTACIÓN</td> <td></td> <td></td> <td></td> <td></td> </tr> </tbody> </table> </div> FECHA: </div></body></html>';
-                    /*$strHtml ="<!DOCTYPE html>
-                    <html lang=\"es\">
-                    
-                    <head>
-                        <meta charset=\"UTF-8\">
-                        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-                        <title>Ejemplo HTML para PDF</title>
-                    </head>
-                    
-                    <body>
-                        <h1>Hola, este es un ejemplo de HTML para PDF</h1>
-                        <p>Este es un párrafo de ejemplo.</p>
-                        <ul>
-                            <li>Elemento de lista 1</li>
-                            <li>Elemento de lista 2</li>
-                            <li>Elemento de lista 3</li>
-                        </ul>
-                        <p>¡Gracias por probar!</p>
-                    </body>
-                    
-                    </html>";*/
+                    $strPregunta = "str_".$arrayItemRespuesta["ID_PREGUNTA"]."_";
+                    if(in_array($arrayItemRespuesta["ID_PREGUNTA"],$arrayRespuestasBuenas))
+                    {
+                        if($arrayItemRespuesta["RESPUESTA"] == "Muy Bueno")
+                        {
+                            $strResp ="<td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>";
+                        }
+                        elseif($arrayItemRespuesta["RESPUESTA"] == "Bueno")
+                        {
+                            $strResp ="<td style=\"text-align: center;\"></td>
+                            <td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>";
+                        }
+                        elseif($arrayItemRespuesta["RESPUESTA"] == "Regular")
+                        {
+                            $strResp ="<td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td>
+                                       <td style=\"text-align: center;\"></td>";
+                        }
+                        elseif($arrayItemRespuesta["RESPUESTA"] == "Mala")
+                        {
+                            $strResp ="<td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"></td>
+                                       <td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td>";
+                        }
+                        $strHtml   = str_replace($strPregunta,$strResp,$strHtml);
+                    }
+                    if(in_array($arrayItemRespuesta["ID_PREGUNTA"],$arrayRespuestasSiNo))
+                    {
+                        if($arrayItemRespuesta["RESPUESTA"] == "Si")
+                        {
+                            $strSiNo= "<td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td><td></td>";
+                        }
+                        elseif($arrayItemRespuesta["RESPUESTA"] == "No")
+                        {
+                            $strSiNo= "<td></td><td style=\"text-align: center;\"><span style=\"font-size: 10px; color: black; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: black;\"></span></td>";
+                            
+                        }
+                        $strHtml   = str_replace($strPregunta,$strSiNo,$strHtml);
+                    }
+                    $strHtml   = str_replace($strPregunta,$arrayItemRespuesta["RESPUESTA"],$strHtml);
                 }
+            }
         }
         catch(\Exception $ex)
         {

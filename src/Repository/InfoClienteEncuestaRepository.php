@@ -833,7 +833,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         try
         {
-            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
+            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO,D.PERMITE_FIRMA, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
                                 (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
                                 (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
                                 (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
@@ -901,6 +901,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('FE_CREACION', 'strFeCreacion', 'string');
             $objRsmBuilder->addScalarResult('CLIENTE_ID', 'intIdCliente', 'integer');
             $objRsmBuilder->addScalarResult('TITULO', 'strTitulo', 'string');
+            $objRsmBuilder->addScalarResult('PERMITE_FIRMA', 'strPermiteFirma', 'string');
             $objRsmBuilder->addScalarResult('ESTADO', 'strEstado', 'string');
             $objRsmBuilder->addScalarResult('ID_CLT_ENCUESTA', 'intIdCltEncuesta', 'string');
             $objRsmBuilder->addScalarResult('NOMBRE_CLIENTE', 'strNombreClt', 'string');

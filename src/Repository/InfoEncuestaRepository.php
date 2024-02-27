@@ -104,6 +104,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");
             $objRsmBuilder->addScalarResult("NOMBRE_COMERCIAL", "strEmpresa", "string");
             $objRsmBuilder->addScalarResult("PERMITE_FIRMA", "strPermiteFirma", "string");
+            $objRsmBuilder->addScalarResult('PERMITE_DATO_ADICIONAL', 'strPermiteDatoAdicional', 'string');
             $objRsmBuilder->addScalarResult("AREA", "strArea", "string");
             $objRsmBuilder->addScalarResult("SUCURSAL", "strSucursal", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");

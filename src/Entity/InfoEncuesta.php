@@ -50,6 +50,11 @@ class InfoEncuesta
      */
     private $PERMITE_FIRMA;
 
+/**
+     * @ORM\Column(type="string", length=2)
+     */
+    private $PERMITE_DATO_ADICIONAL;
+
     /**
      * @ORM\Column(type="string", length=50)
      */
@@ -169,6 +174,18 @@ class InfoEncuesta
     public function setPERMITE_FIRMA(string $PERMITE_FIRMA): self
     {
         $this->PERMITE_FIRMA = $PERMITE_FIRMA;
+
+        return $this;
+    }
+
+    public function getPERMITE_DATO_ADICIONAL(): ?string
+    {
+        return $this->PERMITE_DATO_ADICIONAL;
+    }
+
+    public function setPERMITE_DATO_ADICIONAL(string $PERMITE_DATO_ADICIONAL): self
+    {
+        $this->PERMITE_DATO_ADICIONAL = $PERMITE_DATO_ADICIONAL;
 
         return $this;
     }

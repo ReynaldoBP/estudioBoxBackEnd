@@ -810,6 +810,9 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque
      * @version 1.0 03-04-2023
      *
+     * @author Kevin Baque
+     * @version 1.1 26-02-2024 - se agrega filtro de respuesta y preguntas
+     *
      * @return array  $arrayRespuesta
      * 
      */    
@@ -826,6 +829,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
         $intPagActual       = $arrayParametros['intPagActual'] ? $arrayParametros['intPagActual']:'';
         $intLimitePag       = $arrayParametros['intLimitePag'] ? $arrayParametros['intLimitePag']:'';
+        $strRespuesta       = $arrayParametros['strRespuesta'] ? $arrayParametros['strRespuesta']:'';
+        $strPregunta        = $arrayParametros['strPregunta'] ? $arrayParametros['strPregunta']:'';
         $intTotalRegistros  = ($intPagActual-1)*$intLimitePag;
         $arrayRespuesta     = array();
         $strMensajeError    = '';
@@ -874,6 +879,15 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                 AND A.ESTADO in ('ACTIVO','PENDIENTE','ELIMINADO')
                                 AND EXTRACT(MONTH FROM A.FE_CREACION ) = :intMes ";
             $strLimit       = " LIMIT ".$intLimitePag." OFFSET ".$intTotalRegistros;
+            if(!empty($strRespuesta) && !empty($strPregunta))
+            {
+                $strFrom    .= " INNER JOIN INFO_RESPUESTA IRE        ON IRE.CLT_ENCUESTA_ID = A.ID_CLT_ENCUESTA 
+                                 INNER JOIN INFO_PREGUNTA IP          ON IRE.PREGUNTA_ID     = IP.ID_PREGUNTA ";
+                $strWhere .= " AND lower(IRE.RESPUESTA) like lower(:strRespuesta)
+                               AND IP.DESCRIPCION = :strPregunta ";
+                $objQuery->setParameter("strRespuesta", '%' . trim($strRespuesta) . '%');
+                $objQuery->setParameter("strPregunta", $strPregunta);
+            }
             if(!empty($intIdSucursal))
             {
                 $strWhere   .= " AND SUB_ISU.ID_SUCURSAL = :intIdSucursal ";

@@ -866,6 +866,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
                                     AND IOR.TIPO_RESPUESTA = 'ABIERTA'
                                     AND IOR.DESCRIPCION = 'Comentario'
+                                    AND (LOWER(IP.DESCRIPCION) LIKE '%comentario%' || LOWER(IP.DESCRIPCION) LIKE '%sugerencias%'|| LOWER(IP.DESCRIPCION) LIKE '%observaciones%')
                                     AND IR.RESPUESTA IS NOT NULL
                                     LIMIT   1
                                 ) AS COMENTARIO ";

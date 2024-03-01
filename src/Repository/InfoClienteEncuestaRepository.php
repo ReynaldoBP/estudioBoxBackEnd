@@ -77,6 +77,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strEstado          = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:array('ACTIVO','INACTIVO','ELIMINADO');
         $intLimite          = isset($arrayParametros["intLimite"]) && !empty($arrayParametros["intLimite"]) ? $arrayParametros["intLimite"]:2;
         $intIdEmpresa       = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal      = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
         $arrayCltEncuesta   = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -91,6 +92,12 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
                 $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+            }
+            if(!empty($intIdSucursal))
+            {
+                $strSubFrom   = " JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID
+                                  JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
+                $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
             $strSelect      = "SELECT WEEK(ICE.FE_CREACION,1) AS SEMANA,
                                       EXTRACT(YEAR  FROM ICE.FE_CREACION) AS ANIO, 
@@ -134,6 +141,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intMes             = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
         $intAnio            = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
         $intIdEmpresa       = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal      = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
         $arrayResultado     = array();
         $strMensajeError    = "";
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -149,6 +157,13 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
                 $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+            }
+            if(!empty($intIdSucursal))
+            {
+                $strSubFrom   = " JOIN INFO_ENCUESTA IE ON IE.ID_ENCUESTA=ICE.ENCUESTA_ID
+                                  JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID
+                                  JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
+                $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
             $strSelect      = "SELECT COUNT(*) AS CANTIDAD ";
             $strFrom        = "FROM INFO_CLIENTE_ENCUESTA ICE ".$strSubFrom;
@@ -187,6 +202,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strEstado          = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:array('ACTIVO','INACTIVO','ELIMINADO');
         $intLimite          = isset($arrayParametros["intLimite"]) && !empty($arrayParametros["intLimite"]) ? $arrayParametros["intLimite"]:6;
         $intIdEmpresa       = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal      = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
         $arrayResultado   = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -201,6 +217,12 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
                 $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+            }
+            if(!empty($intIdSucursal))
+            {
+                $strSubFrom   = " JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID
+                                  JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
+                $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
             $strSelect      = "SELECT EXTRACT(MONTH FROM ICE.FE_CREACION) AS MES,
                                       EXTRACT(YEAR  FROM ICE.FE_CREACION) AS ANIO, 
@@ -217,6 +239,73 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('ANIO', 'intAnio', 'integer');
             $objRsmBuilder->addScalarResult('CANTIDAD', 'intCantidad', 'integer');
             $strSql       = $strSelect.$strFrom.$strWhere.$strGroup.$strOrder.$strLimit;
+            $objQuery->setSQL($strSql);
+            $arrayResultado['resultados'] = $objQuery->getResult();
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayResultado['error'] = $strMensajeError;
+        return $arrayResultado;
+    }
+
+    /**
+     * Documentación para la función 'getTotalEncuestaPorArea'
+     *
+     * Función que permite listar el total de encuestas por area.
+     * 
+     * @author Kevin Baque Puya
+     * @version 1.0 05-03-2024
+     * 
+     * @return array  $arrayResultado
+     * 
+     */
+    public function getTotalEncuestaPorArea($arrayParametros)
+    {
+        $strEstado          = isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]) ? $arrayParametros["strEstado"]:array('ACTIVO','INACTIVO','ELIMINADO');
+        $intLimite          = isset($arrayParametros["intLimite"]) && !empty($arrayParametros["intLimite"]) ? $arrayParametros["intLimite"]:6;
+        $intIdEmpresa       = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal      = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
+        $intMes             = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
+        $intAnio            = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
+        $arrayResultado   = array();
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        try
+        {
+            $strSubFrom = "";
+            $strSubWhere  = "";
+            if(!empty($intIdEmpresa) && empty($intIdSucursal))
+            {
+                error_log("IF empresa");
+                $strSubFrom   = " JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
+                                  JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
+                $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+            }
+            if(!empty($intIdSucursal))
+            {
+                error_log("IF sucursal");
+                $strSubFrom   = " JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
+                $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
+            }
+            $strSelect      = "SELECT AR.ID_AREA, AR.AREA,IFNULL(COUNT(*),0) AS CANTIDAD ";
+            $strFrom        = " FROM INFO_CLIENTE_ENCUESTA ICE
+                                     INNER JOIN INFO_ENCUESTA IE ON ICE.ENCUESTA_ID = IE.ID_ENCUESTA
+                                     JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID ".$strSubFrom;
+            $strWhere       = " WHERE IE.ESTADO in (:ESTADO) AND ICE.ESTADO!='ELIMINADO' 
+                                AND EXTRACT(MONTH FROM ICE.FE_CREACION) = :intMes
+                                AND EXTRACT(YEAR  FROM ICE.FE_CREACION) = :intAnio ".$strSubWhere." ";
+            $strGroup       = " GROUP BY AR.ID_AREA,AR.AREA ";
+            $strOrder       = " ORDER BY CANTIDAD ASC ";
+            $objQuery->setParameter("ESTADO",$strEstado);
+            $objQuery->setParameter("intMes", $intMes);
+            $objQuery->setParameter("intAnio", $intAnio);
+            $objRsmBuilder->addScalarResult('ID_AREA', 'intArea', 'integer');
+            $objRsmBuilder->addScalarResult('AREA', 'strArea', 'string');
+            $objRsmBuilder->addScalarResult('CANTIDAD', 'intCantidad', 'integer');
+            $strSql       = $strSelect.$strFrom.$strWhere.$strGroup.$strOrder;
             $objQuery->setSQL($strSql);
             $arrayResultado['resultados'] = $objQuery->getResult();
         }

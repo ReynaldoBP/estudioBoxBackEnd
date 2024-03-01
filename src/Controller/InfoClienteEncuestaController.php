@@ -115,6 +115,7 @@ class InfoClienteEncuestaController extends AbstractController
         $strBanderaSemanal    = isset($arrayParametros["strBanderaSemanal"]) && !empty($arrayParametros["strBanderaSemanal"]) ? $arrayParametros["strBanderaSemanal"]:"NO";
         $strBanderaMensual    = isset($arrayParametros["strBanderaMensual"]) && !empty($arrayParametros["strBanderaMensual"]) ? $arrayParametros["strBanderaMensual"]:"NO";
         $strBanderaSemestral  = isset($arrayParametros["strBanderaSemestral"]) && !empty($arrayParametros["strBanderaSemestral"]) ? $arrayParametros["strBanderaSemestral"]:"NO";
+        $strBanderaArea       = isset($arrayParametros["strBanderaArea"]) && !empty($arrayParametros["strBanderaArea"]) ? $arrayParametros["strBanderaArea"]:"NO";
         $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
         $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $objResponse          = new Response;
@@ -168,6 +169,11 @@ class InfoClienteEncuestaController extends AbstractController
             {
                 $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
                                                  ->getTotalEncuestaSemestral($arrayParametros);
+            }
+            elseif($strBanderaArea=="SI")
+            {
+                $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                 ->getTotalEncuestaPorArea($arrayParametros);
             }
             if(!empty($arrayData["error"]))
             {

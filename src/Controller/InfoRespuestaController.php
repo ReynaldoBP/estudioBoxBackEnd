@@ -84,6 +84,8 @@ class InfoRespuestaController extends AbstractController
         $strBanderaCorreo     = "";
         try
         {
+            error_log("-------------------------CREATE RESPUESTA--------------------------");
+            error_log(print_r($arrayPregunta, TRUE));
             //Si existe correo, lo validamos
             if(!empty($strCorreo) && !filter_var($strCorreo, FILTER_VALIDATE_EMAIL))
             {
@@ -260,6 +262,7 @@ class InfoRespuestaController extends AbstractController
             //Validamos que todas las preguntas que recibimos desde el app estén en la encuesta
             $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
                                             ->getPregunta(array("intIdEncuesta"=>$intIdEncuesta));
+            error_log("iniciamos con la validacion de preguntas");
             if(!empty($arrayDataPregunta["error"]))
             {
                 throw new \Exception($arrayDataPregunta["error"]);
@@ -353,11 +356,6 @@ class InfoRespuestaController extends AbstractController
                     $strMensajeCorreo   = stream_get_contents ($objPlantilla->getPLANTILLA());
                     $strMensajeCorreo   = str_replace('strCuerpoCorreo',$strCuerpoCorreo,$strMensajeCorreo);
                     $strAsunto          = "Calificacion de Encuesta Deficiente";
-                    /*$arrayParametros    = array("strAsunto"        => $strAsunto,
-                                                "strMensajeCorreo" => $strMensajeCorreo,
-                                                "strRemitente"     => 'notificaciones@estudiobox.info',
-                                                "strDestinatario"  => 'bespinel@massvision.tv');
-                    $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);*/
                     $arrayUsuarioEmp    = $this->getDoctrine()
                                                ->getRepository(InfoUsuarioEmpresa::class)
                                                ->findBy(array("EMPRESA_ID" => $objEmpresa->getId(),
@@ -374,12 +372,13 @@ class InfoRespuestaController extends AbstractController
                                                             "strMensajeCorreo" => $strMensajeCorreo,
                                                             "strRemitente"     => "notificaciones@estudiobox.info",
                                                             'strDestinatario'  => $arrayItemUsuarioEmp->getUSUARIOID()->getCORREO());
-                                $strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
+                                //$strMensajeError    = $this->utilitarioController->enviaCorreo($arrayParametros);
                             }
                         }
                     }
                 }
             }
+            error_log("antes de guardar");
             if($em->getConnection()->isTransactionActive())
             {
                 $em->getConnection()->commit();
@@ -395,6 +394,9 @@ class InfoRespuestaController extends AbstractController
         }
         catch(\Exception $ex)
         {
+            error_log("------------------------------------INI Catch------------------------------------");
+            error_log($ex->getMessage());
+            error_log("------------------------------------FIN Catch------------------------------------");
             $intStatus = 204;
             if($em->getConnection()->isTransactionActive())
             {

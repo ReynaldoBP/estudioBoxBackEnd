@@ -18,9 +18,16 @@ use App\Entity\InfoReporteArchivo;
 use App\Entity\InfoUsuario;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\AdmiTipoRol;
-
+use App\Entity\InfoPlantilla;
+use App\Controller\UtilitarioController;
 class InfoReportesController extends Controller
 {
+    private $utilitarioController;
+
+    public function __construct(UtilitarioController $utilitarioController)
+    {
+        $this->utilitarioController = $utilitarioController;
+    }
     /**
      * @Route("/info/reportes", name="app_info_reportes")
      */
@@ -41,6 +48,9 @@ class InfoReportesController extends Controller
      * @author David Leon
      * @version 1.0 20-10-2023
      * 
+     * @author Kevin Baque Puya
+     * @version 1.0 18-03-2024 - Envío de correos de los reportes que se crean.
+     * 
      * @return array  $objResponse
      */
     public function createReporteAction(Request $request)
@@ -50,6 +60,7 @@ class InfoReportesController extends Controller
         $strDescripcion         = $request->request->get("descripcion", '');
         $intEmpresa             = $request->request->get("empresa", '');
         $intSucursal            = $request->request->get("sucursal", '');
+        $strCorreo              = $request->request->get("correo", '');
         $uploadedFile           = $request->files->get("archivo");
         $strEstado              = 'ACTIVO';
         $strUsuarioCreacion     = $request->request->get("usuario", '');
@@ -60,6 +71,7 @@ class InfoReportesController extends Controller
         $em                     = $this->getDoctrine()->getManager();
         try
         {
+            $arrayCorreo = explode(",",$strCorreo);
             $em->getConnection()->beginTransaction();
             if(empty($uploadedFile))
             {
@@ -101,6 +113,28 @@ class InfoReportesController extends Controller
                 $tamanoFormateado = number_format($tamanoArchivoBytes / 1024, 2) . ' KB';
             } else {
                 $tamanoFormateado = $tamanoArchivoBytes . ' bytes';
+            }
+            if(!empty($strCorreo))
+            {
+                $objPlantilla     = $this->getDoctrine()
+                                         ->getRepository(InfoPlantilla::class)
+                                         ->findOneBy(array("DESCRIPCION" => "REPORTE",
+                                                           "ESTADO"      => "ACTIVO"));
+                if(!empty($objPlantilla) && is_object($objPlantilla))
+                {
+                    $strUrlArchivo      = "https://panel.estudiobox.info:8888/".$archivoDestino;
+                    $strMensajeCorreo   = stream_get_contents ($objPlantilla->getPLANTILLA());
+                    $strMensajeCorreo   = str_replace('strCuerpoCorreo1',$strUrlArchivo,$strMensajeCorreo);
+                    $strAsunto          = "Reporte: ".$strTitulo;
+                    foreach($arrayCorreo as $strCorreo)
+                    {
+                        $arrayParametrosCorreo = array("strAsunto"        => $strAsunto,
+                                                       "strMensajeCorreo" => $strMensajeCorreo,
+                                                       "strRemitente"     => "notificaciones@estudiobox.info",
+                                                       "strDestinatario"  => $strCorreo);
+                        $stRespuestaCorreo      = $this->utilitarioController->enviaCorreo($arrayParametrosCorreo);
+                    }
+                }
             }
             $entityReporte = new InfoReporte();
             $entityReporte->setTITULO($strTitulo);

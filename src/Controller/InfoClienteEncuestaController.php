@@ -15,6 +15,7 @@ use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoUsuario;
 use App\Entity\InfoPregunta;
+use App\Entity\InfoEncuesta;
 class InfoClienteEncuestaController extends AbstractController
 {
 
@@ -859,5 +860,98 @@ class InfoClienteEncuestaController extends AbstractController
         return $objResponse;
     }
 
-
+/**
+     * @Rest\Post("/apiWeb/deleteEncuestasDuplicadas")
+     * 
+     * Documentación para la función 'deleteEncuestasDuplicadas'.
+     *
+     * Función que permite exportar un reporte de las respuestas en la opción Data Encuesta.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 10-09-2023
+     *
+     */
+    public function deleteEncuestasDuplicadas(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        $arrayDuplicado       = array();
+        try
+        {
+            $arrayEncuesta           = $this->getDoctrine()->getRepository(InfoEncuesta::class)
+                                            ->getEncuesta(array("intIdEmpresa"=>$intIdEmpresa));
+            if(!empty($arrayEncuesta["error"]))
+            {
+                throw new \Exception($arrayEncuesta["error"]);
+            }
+            if(count($arrayEncuesta["resultados"])==0)
+            {
+                throw new \Exception("No existen encuestas con los parámetros enviados.");
+            }
+            foreach($arrayEncuesta["resultados"] as $arrayItemEncuesta)
+            {
+                $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
+                                                ->getPregunta(array("strEncuesta"  => $arrayItemEncuesta["strTitulo"],
+                                                                    "intIdEmpresa" => $intIdEmpresa,
+                                                                    "boolAgrupar"  => "SI"));
+                if(!empty($arrayDataPregunta["error"]))
+                {
+                    throw new \Exception($arrayData["error"]);
+                }
+                $arrayParametros["arrayPregunta"] = $arrayDataPregunta["resultados"];
+                $arrayParametros["strTitulo"]     = $arrayItemEncuesta["strTitulo"];
+                $arrayData                        = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                                         ->getReporteDataEncuesta($arrayParametros);
+                if(!empty($arrayData["error"]))
+                {
+                    throw new \Exception($arrayData["error"]);
+                }
+                if(count($arrayData["resultados"]) == 0)
+                {
+                    throw new \Exception("No existen datos con los parámetros enviados.");
+                }
+                
+                foreach ($arrayData["resultados"] as $arrayItemDataEncuesta)
+                {
+                    $boolDuplicado = false;
+                    foreach($arrayDataPregunta["resultados"] as $arrayItemPregunta)
+                    {
+                        if(!empty($arrayTemportal) && $arrayItemDataEncuesta[$arrayItemPregunta["strPregunta"]] == $arrayTemportal[$arrayItemPregunta["strPregunta"]])
+                        {
+                            $boolDuplicado = true;
+                        }
+                        else
+                        {
+                            $boolDuplicado = false;
+                            break;
+                        }
+                    }
+                    if($boolDuplicado)
+                    {
+                        $arrayDuplicado[] = $arrayItemDataEncuesta["id"];
+                    }
+                    else
+                    {
+                        $arrayTemportal = $arrayItemDataEncuesta;
+                    }
+                }
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
+                                                   "arrayDuplicados"   => array_unique($arrayDuplicado),
+                                                   "strMensaje"        => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
 }

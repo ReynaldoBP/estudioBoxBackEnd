@@ -19,6 +19,7 @@ use App\Entity\InfoPregunta;
 use App\Entity\InfoEncuesta;
 use App\Entity\InfoArea;
 use App\Entity\InfoSucursal;
+use App\Entity\InfoAceptacionTratamiento;
 class InfoClienteEncuestaController extends AbstractController
 {
 
@@ -982,9 +983,11 @@ class InfoClienteEncuestaController extends AbstractController
         $objResponse          = new Response;
         $intStatus            = 200;
         $strMensaje           = "";
+        $strPoliticaAceptada  = "No";
         $arrayDuplicado       = array();
         try
         {
+            //Bloque que valida los datos enviado por parámetros
             $objEncuesta     = $this->getDoctrine()->getRepository(InfoEncuesta::class)->find($intIdEncuesta);
             if(!is_object($objEncuesta))
             {
@@ -1000,6 +1003,13 @@ class InfoClienteEncuestaController extends AbstractController
             {
                 throw new \Exception("No existe la sucursal enviada por parámetro");
             }
+            //Validar si el usuario ya aceptó las politicas anteriormente
+            
+            $arrayTratamientoDP = $this->getDoctrine()
+                                       ->getRepository(InfoAceptacionTratamiento::class)
+                                       ->findBy(array("ESTADO"         => "ACTIVO",
+                                                      "IDENTIFICACION" => $intNumeroDocumento));
+            $strPoliticaAceptada = (!empty($arrayTratamientoDP) && is_array($arrayTratamientoDP)) ? "Si":"No";
             error_log($objSucursal->getNOMBRE());
             /*
                 Las sedes estan parametrizadas como 
@@ -1062,9 +1072,10 @@ class InfoClienteEncuestaController extends AbstractController
             $intStatus = 204;
             $strMensaje = $ex->getMessage();
         }
-        $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
-                                                   "jsonDatosPersona"  => $jsonDatosPersona,
-                                                   "strMensaje"        => $strMensaje)));
+        $objResponse->setContent(json_encode(array("intStatus"           => $intStatus,
+                                                   "jsonDatosPersona"    => $jsonDatosPersona,
+                                                   "strPoliticaAceptada" => $strPoliticaAceptada,
+                                                   "strMensaje"          => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }

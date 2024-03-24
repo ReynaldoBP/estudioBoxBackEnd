@@ -5,7 +5,8 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
@@ -16,6 +17,8 @@ use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoUsuario;
 use App\Entity\InfoPregunta;
 use App\Entity\InfoEncuesta;
+use App\Entity\InfoArea;
+use App\Entity\InfoSucursal;
 class InfoClienteEncuestaController extends AbstractController
 {
 
@@ -860,7 +863,7 @@ class InfoClienteEncuestaController extends AbstractController
         return $objResponse;
     }
 
-/**
+    /**
      * @Rest\Post("/apiWeb/deleteEncuestasDuplicadas")
      * 
      * Documentación para la función 'deleteEncuestasDuplicadas'.
@@ -950,6 +953,117 @@ class InfoClienteEncuestaController extends AbstractController
         }
         $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
                                                    "arrayDuplicados"   => array_unique($arrayDuplicado),
+                                                   "strMensaje"        => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
+    /**
+     * @Rest\Post("/apiMovil/getDatosPersonales")
+     * 
+     * Documentación para la función 'getDatosPersonales'.
+     *
+     * Función que permite consultar datos de los pacientes de Clinica Kenedy.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 23-03-2024
+     *
+     */
+    public function getDatosPersonales(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $strPais              = isset($arrayParametros["strPais"]) && !empty($arrayParametros["strPais"]) ? $arrayParametros["strPais"]:"";
+        $strTipoDocumento     = isset($arrayParametros["strTipoDocumento"]) && !empty($arrayParametros["strTipoDocumento"]) ? $arrayParametros["strTipoDocumento"]:"";
+        $intIdEncuesta        = isset($arrayParametros["intIdEncuesta"]) && !empty($arrayParametros["intIdEncuesta"]) ? $arrayParametros["intIdEncuesta"]:"";
+        $intNumeroDocumento   = isset($arrayParametros["intNumeroDocumento"]) && !empty($arrayParametros["intNumeroDocumento"]) ? $arrayParametros["intNumeroDocumento"]:"";
+        $strUsrSesion         = isset($arrayParametros["strUsrSesion"]) && !empty($arrayParametros["strUsrSesion"]) ? $arrayParametros["strUsrSesion"]:"";
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $strMensaje           = "";
+        $arrayDuplicado       = array();
+        try
+        {
+            $objEncuesta     = $this->getDoctrine()->getRepository(InfoEncuesta::class)->find($intIdEncuesta);
+            if(!is_object($objEncuesta))
+            {
+                throw new \Exception("No existe la encuesta enviada por parámetro");
+            }
+            $objArea         = $this->getDoctrine()->getRepository(InfoArea::class)->find($objEncuesta->getAREAID());
+            if(!is_object($objArea))
+            {
+                throw new \Exception("No existe el area enviada por parámetro");
+            }
+            $objSucursal     = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($objArea->getSUCURSALID());
+            if(!is_object($objSucursal))
+            {
+                throw new \Exception("No existe la sucursal enviada por parámetro");
+            }
+            error_log($objSucursal->getNOMBRE());
+            /*
+                Las sedes estan parametrizadas como 
+                1 = Kennedy Policentro
+                2 = Kennedy Alborada
+                3 = Kennedy Samborondon
+            */
+            if($objSucursal->getNOMBRE() == "Kennedy")
+            {
+                $intSede = 1;
+            }
+            else if($objSucursal->getNOMBRE() == "Alborada")
+            {
+                $intSede = 2;
+            }
+            else if($objSucursal->getNOMBRE() == "Samborondon")
+            {
+                $intSede = 3;
+            }
+            else
+            {
+                throw new \Exception("No existe sede con la sucursal registrada en la Base de Datos");
+            }
+            if(strtoupper($strPais) == "ECUADOR" && strlen($intNumeroDocumento) !=10)
+            {
+                throw new \Exception("Estimado Usuario la cantidad de dígitos de la identificación es incorrecta");
+            }
+            $arrayTipoDocumento = explode("-",$strTipoDocumento);
+            $strTipoDocumento   = $arrayTipoDocumento[0];
+            error_log("strPais: ".$strPais);
+            error_log("strTipoDocumento: ".$strTipoDocumento);
+            error_log("intIdEncuesta: ".$intIdEncuesta);
+            error_log("intNumeroDocumento: ".$intNumeroDocumento);
+            //Consultamos los datos de Kennedy
+            //$url = 'https://apis.hospikennedy.med.ec/dev/api/v1/pac-encuesta?id_sede=2&tipo_doc=CED&identif=0959963760';
+            $url = 'https://apis.hospikennedy.med.ec/dev/api/v1/pac-encuesta?id_sede='.$intSede.'&tipo_doc='.$strTipoDocumento.'&identif='.$intNumeroDocumento;
+            // Cabecera con el token de autorización
+            $headers = [
+                'Authorization' => 'Bearer 463099df1a373b835b306f741c869505475e3ff7143ad9d4ce9458cf5bcfe38a'
+            ];
+            // Crear una instancia de HttpClient
+            $httpClient = HttpClient::create();
+            // Realizar la solicitud GET
+            $response = $httpClient->request('GET', $url, [
+                'headers' => $headers,
+            ]);
+            // Obtener el contenido de la respuesta
+            $jsonDatosPersona = json_decode($response->getContent(), true);
+            if(!empty($jsonDatosPersona))
+            {
+                $jsonDatosPersona = $jsonDatosPersona[0];
+            }
+            else
+            {
+                throw new \Exception("No existen datos del paciente con los parámetros enviados");
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
+                                                   "jsonDatosPersona"  => $jsonDatosPersona,
                                                    "strMensaje"        => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;

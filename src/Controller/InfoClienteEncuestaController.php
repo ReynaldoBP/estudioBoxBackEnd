@@ -898,8 +898,11 @@ class InfoClienteEncuestaController extends AbstractController
             {
                 throw new \Exception("No existen encuestas con los parámetros enviados.");
             }
+            //Recorro las encuestas
             foreach($arrayEncuesta["resultados"] as $arrayItemEncuesta)
             {
+                error_log("***************");
+                error_log("Encuesta: ".$arrayItemEncuesta["strTitulo"]);
                 $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
                                                 ->getPregunta(array("strEncuesta"  => $arrayItemEncuesta["strTitulo"],
                                                                     "intIdEmpresa" => $intIdEmpresa,
@@ -918,9 +921,9 @@ class InfoClienteEncuestaController extends AbstractController
                 }
                 if(count($arrayData["resultados"]) == 0)
                 {
-                    throw new \Exception("No existen datos con los parámetros enviados.");
+                    throw new \Exception("No existen respuestas con los parámetros enviados.");
                 }
-                
+                //Recorro las preguntas y respuestas
                 foreach ($arrayData["resultados"] as $arrayItemDataEncuesta)
                 {
                     $boolDuplicado = false;
@@ -938,6 +941,10 @@ class InfoClienteEncuestaController extends AbstractController
                     }
                     if($boolDuplicado)
                     {
+                        error_log("---------------");
+                        error_log("Encuestas Duplicadas");
+                        error_log(print_r($arrayItemDataEncuesta,true));
+                        error_log(print_r($arrayTemportal,true));
                         $arrayDuplicado[] = $arrayItemDataEncuesta["id"];
                     }
                     else
@@ -952,9 +959,49 @@ class InfoClienteEncuestaController extends AbstractController
             $intStatus = 204;
             $strMensaje = $ex->getMessage();
         }
+        try
+        {
+            $strMensaje2 = "No hay encuestas por eliminar";
+            if(!empty(array_unique($arrayDuplicado)))
+            {
+                $em = $this->getDoctrine()->getManager();
+                error_log("Recorremos los duplicados++++++++++++++++++++");
+                $em->getConnection()->beginTransaction();
+                foreach(array_unique($arrayDuplicado) as $key => $value)
+                {
+                    # code...
+                    error_log("+++++++++++++++");
+                    error_log("key: ".$key."|value: ".$value);
+                    $objClienteEncuesta = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)->find($value);
+                    if(is_object($objClienteEncuesta) && !empty($objClienteEncuesta))
+                    {
+                        $objClienteEncuesta->setESTADO("ELIMINADO");
+                        $objClienteEncuesta->setUSRMODIFICACION("baquekevin@hotmail.com");
+                        $objClienteEncuesta->setFEMODIFICACION(new \DateTime('now'));
+                        $em->persist($objClienteEncuesta);
+                        $em->flush();
+                    }
+                }
+                if ($em->getConnection()->isTransactionActive())
+                {
+                    $em->getConnection()->commit();
+                    $em->getConnection()->close();
+                }
+                $strMensaje2 = "Cantidad de Encuestas eliminadas: ".count(array_unique($arrayDuplicado));
+            }
+        }
+        catch(\Exception $ex)
+        {
+            if($em->getConnection()->isTransactionActive())
+            {
+                $em->getConnection()->rollback();
+            }
+            $strMensaje2 = "Error en la actualización de estados";
+        }
         $objResponse->setContent(json_encode(array("intStatus"         => $intStatus,
                                                    "arrayDuplicados"   => array_unique($arrayDuplicado),
-                                                   "strMensaje"        => $strMensaje)));
+                                                   "strMensaje"        => $strMensaje,
+                                                   "strMensaje2"       => $strMensaje2)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }

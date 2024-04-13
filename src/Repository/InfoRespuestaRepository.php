@@ -38,6 +38,7 @@ class InfoRespuestaRepository extends \Doctrine\ORM\EntityRepository
             $strSelectCount = "SELECT COUNT(*) AS CANTIDAD ";
             $strFrom        = "FROM INFO_RESPUESTA          IRE
                                 JOIN INFO_PREGUNTA          IPR  ON IPR.ID_PREGUNTA=IRE.PREGUNTA_ID
+                                AND IPR.ESTADO = 'ACTIVO'
                                 JOIN ADMI_TIPO_OPCION_RESPUESTA  IOR  ON IOR.ID_TIPO_OPCION_RESPUESTA=IPR.TIPO_OPCION_RESPUESTA_ID ";
             $strWhere       = "WHERE IRE.ESTADO in (:strEstado) ";
             $strOrderBy     = " Order by IPR.FE_CREACION ASC ";

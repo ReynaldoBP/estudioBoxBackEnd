@@ -48,6 +48,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                                         SELECT VALOR 
                                         FROM INFO_OPCION_RESPUESTA 
                                         WHERE PREGUNTA_ID=IP.ID_PREGUNTA AND TIPO_OPCION_RESPUESTA_ID=ATOR.ID_TIPO_OPCION_RESPUESTA
+                                        AND ESTADO='ACTIVO'
                                    ) AS VALOR_DESPLEGABLE,
                                    IP.ESTADO,
                                    IP.USR_CREACION,

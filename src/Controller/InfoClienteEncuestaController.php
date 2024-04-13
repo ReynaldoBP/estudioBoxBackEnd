@@ -548,10 +548,14 @@ class InfoClienteEncuestaController extends AbstractController
      * @author Kevin Baque Puya
      * @version 1.0 03-04-2023
      *
+     * @author Kevin Baque Puya
+     * @version 1.1 13-04-2024 - se agrega validación para reducir el costo del query en encuestas que no tienen tipos de preguntas cerradas o de comentario.
+     *
      */
     public function getDataEncuesta(Request $objRequest)
     {
         error_reporting( error_reporting() & ~E_NOTICE );
+        set_time_limit(300);
         $arrayRequest         = json_decode($objRequest->getContent(),true);
         $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
@@ -560,6 +564,8 @@ class InfoClienteEncuestaController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $boolEstrella         = "No";
+        $boolComentario       = "No";
         try
         {
             if(empty($intIdEmpresa))
@@ -593,6 +599,44 @@ class InfoClienteEncuestaController extends AbstractController
                     }
                 }
             }
+            //Bloque que valida si alguna pregunta de la encuesta, tiene tipo de pregunta con estrellas
+            $arrayEncuesta           = $this->getDoctrine()->getRepository(InfoEncuesta::class)
+                                            ->getEncuesta(array("intIdEmpresa"  => $arrayParametros["intIdEmpresa"],
+                                                                "intIdSucursal" => $arrayParametros["intIdSucursal"],
+                                                                "intIdArea"     => $arrayParametros["intIdArea"]));
+            if(!empty($arrayEncuesta["error"]))
+            {
+                throw new \Exception($arrayEncuesta["error"]);
+            }
+            if(count($arrayEncuesta["resultados"])==0)
+            {
+                throw new \Exception("No existen encuestas con los parámetros enviados.");
+            }
+            //Recorro las encuestas
+            foreach($arrayEncuesta["resultados"] as $arrayItemEncuesta)
+            {
+                error_log("***************");
+                error_log("Encuesta: ".$arrayItemEncuesta["strTitulo"]);
+                $arrayDataPregunta       = $this->getDoctrine()->getRepository(InfoPregunta::class)
+                                                ->getPregunta(array("strEncuesta"  => $arrayItemEncuesta["strTitulo"],
+                                                                    "intIdEmpresa" => $arrayParametros["intIdEmpresa"],
+                                                                    "boolAgrupar"  => "SI"));
+                if(!empty($arrayDataPregunta["error"]))
+                {
+                    throw new \Exception($arrayData["error"]);
+                }
+                //error_log(print_r($arrayDataPregunta,true));
+                foreach($arrayDataPregunta["resultados"] as $arrayItemPregunta)
+                {
+                    error_log($arrayItemPregunta["strTipoOpcionRespuesta"]);
+                    $boolEstrella   = (!empty($arrayItemPregunta["strTipoOpcionRespuesta"]) && $arrayItemPregunta["strTipoOpcionRespuesta"] == "CERRADA") ? "Si":"No";
+                    $boolComentario = (!empty($arrayItemPregunta["strTipoOpcionRespuesta"]) && $arrayItemPregunta["strTipoOpcionRespuesta"] == "ABIERTA") ? "Si":"No";
+                }
+            }
+            $arrayParametros["boolEstrella"]   = $boolEstrella;
+            $arrayParametros["boolComentario"] = $boolComentario;
+            error_log("boolEstrella: ".$boolEstrella);
+            error_log("boolComentario: ".$boolComentario);
             $arrayData = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
                                              ->getDataEncuesta($arrayParametros);
             if(!empty($arrayData["error"]))
@@ -636,6 +680,7 @@ class InfoClienteEncuestaController extends AbstractController
         $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $intIdUsuario         = isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]) ? $arrayParametros["intIdUsuario"]:"";
         $intIdEmpresa         = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
+        $intIdSucursal        = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
         $objResponse          = new Response;
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
@@ -671,6 +716,14 @@ class InfoClienteEncuestaController extends AbstractController
                             }
                         }
                     }
+                }
+                if(!empty($intIdSucursal) && empty($intIdEmpresa))
+                {
+                    $objSucursal  = $this->getDoctrine()
+                                         ->getRepository(InfoSucursal::class)
+                                         ->find($intIdSucursal);
+                    $intIdEmpresa = $objSucursal->getEMPRESAID()->getId();
+                    $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
                 }
             }
             $arrayParametrosPregunta = array("strEncuesta"  => $arrayParametros["strTitulo"],

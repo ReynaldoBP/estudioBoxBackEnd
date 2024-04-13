@@ -901,10 +901,13 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
      *
      * @author Kevin Baque
      * @version 1.1 26-02-2024 - se agrega filtro de respuesta y preguntas
+     * 
+     * @author Kevin Baque Puya
+     * @version 1.2 13-04-2024 - se agrega validación para reducir el costo del query en encuestas que no tienen tipos de preguntas cerradas o de comentario.
      *
      * @return array  $arrayRespuesta
-     * 
-     */    
+     *
+     */
     public function getDataEncuesta($arrayParametros)
     {
         $intIdCltEncuesta   = $arrayParametros['intIdCltEncuesta'] ? $arrayParametros['intIdCltEncuesta']:'';
@@ -913,13 +916,14 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intAnio            = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
         $intIdEmpresa       = $arrayParametros['intIdEmpresa'] ? $arrayParametros['intIdEmpresa']:'';
         $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
-        $intIdSucursal      = $arrayParametros['intIdSucursal'] ? $arrayParametros['intIdSucursal']:'';
         $intIdArea          = $arrayParametros['intIdArea'] ? $arrayParametros['intIdArea']:'';
         $intIdUsuario       = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:'';
         $intPagActual       = $arrayParametros['intPagActual'] ? $arrayParametros['intPagActual']:'';
         $intLimitePag       = $arrayParametros['intLimitePag'] ? $arrayParametros['intLimitePag']:'';
         $strRespuesta       = $arrayParametros['strRespuesta'] ? $arrayParametros['strRespuesta']:'';
         $strPregunta        = $arrayParametros['strPregunta'] ? $arrayParametros['strPregunta']:'';
+        $boolEstrella       = $arrayParametros['boolEstrella'] ? $arrayParametros['boolEstrella']:'No';
+        $boolComentario     = $arrayParametros['boolComentario'] ? $arrayParametros['boolComentario']:'No';
         $intTotalRegistros  = ($intPagActual-1)*$intLimitePag;
         $arrayRespuesta     = array();
         $strMensajeError    = '';
@@ -927,19 +931,17 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         try
         {
-            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO,D.PERMITE_FIRMA, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
-                                (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
-                                (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
-                                (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
+            if($boolEstrella == "Si")
+            {
+                $strSubSelect = " (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
                                     FROM INFO_RESPUESTA IR
                                     INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
                                     INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
                                     WHERE IR.CLT_ENCUESTA_ID=A.ID_CLT_ENCUESTA
                                     AND IOR.TIPO_RESPUESTA = 'CERRADA'
                                     AND IOR.VALOR           = '5'
-                                ) AS PROMEDIO,
-                                (
-                                SELECT 'SI' AS ES_MENOR_3
+                                    ) AS PROMEDIO,
+                                  (SELECT 'SI' AS ES_MENOR_3
                                     FROM INFO_RESPUESTA IR
                                         INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
                                         INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
@@ -947,8 +949,16 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                         AND IR.RESPUESTA<=3
                                         AND IOR.TIPO_RESPUESTA = 'CERRADA'
                                     LIMIT   1
-                                )ES_MENOR_3,
-                                (SELECT IR.RESPUESTA  AS COMENTARIO
+                                    )ES_MENOR_3,
+                ";
+            }
+            else
+            {
+                $strSubSelect = " '' AS PROMEDIO,'' AS ES_MENOR_3, ";
+            }
+            if($boolComentario == "Si")
+            {
+                $strSubSelect .= " (SELECT IR.RESPUESTA  AS COMENTARIO
                                     FROM INFO_RESPUESTA IR
                                     INNER JOIN INFO_PREGUNTA IP          ON IR.PREGUNTA_ID          = IP.ID_PREGUNTA
                                     INNER JOIN ADMI_TIPO_OPCION_RESPUESTA IOR ON IOR.ID_TIPO_OPCION_RESPUESTA = IP.TIPO_OPCION_RESPUESTA_ID
@@ -959,6 +969,15 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     AND IR.RESPUESTA IS NOT NULL
                                     LIMIT   1
                                 ) AS COMENTARIO ";
+            }
+            else
+            {
+                $strSubSelect .= " '' AS COMENTARIO ";
+            }
+            $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO,D.PERMITE_FIRMA, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
+                                (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
+                                (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
+                                ".$strSubSelect;
             $strFrom        = " FROM INFO_CLIENTE_ENCUESTA A 
                                 INNER JOIN INFO_ENCUESTA D  ON A.ENCUESTA_ID = D.ID_ENCUESTA
                                 INNER JOIN INFO_AREA IAR         ON IAR.ID_AREA         =  D.AREA_ID

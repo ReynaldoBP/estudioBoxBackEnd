@@ -905,6 +905,9 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque Puya
      * @version 1.2 13-04-2024 - se agrega validación para reducir el costo del query en encuestas que no tienen tipos de preguntas cerradas o de comentario.
      *
+     * @author Kevin Baque Puya
+     * @version 1.3 02-08-2024 - se agrega edad y fecha de nacimiento del cliente.
+     *
      * @return array  $arrayRespuesta
      *
      */
@@ -977,6 +980,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $strSelect      = " SELECT  A.FE_CREACION, A.CLIENTE_ID, D.TITULO,D.PERMITE_FIRMA, A.ESTADO, A.ID_CLT_ENCUESTA, SUB_ISU.NOMBRE,IAR.AREA,
                                 (SELECT ICLT.NOMBRE AS NOMBRE_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS NOMBRE_CLIENTE,
                                 (SELECT ICLT.CORREO AS CORREO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS CORREO_CLIENTE,
+                                (SELECT ICLT.EDAD   AS EDAD_CLIENTE  FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS EDAD_CLIENTE,
+                                (SELECT CONCAT(UPPER(LEFT(ICLT.GENERO, 1)), LOWER(SUBSTRING(ICLT.GENERO, 2)))AS GENERO_CLIENTE FROM INFO_CLIENTE ICLT WHERE ICLT.ID_CLIENTE=A.CLIENTE_ID) AS GENERO_CLIENTE,
                                 ".$strSubSelect;
             $strFrom        = " FROM INFO_CLIENTE_ENCUESTA A 
                                 INNER JOIN INFO_ENCUESTA D  ON A.ENCUESTA_ID = D.ID_ENCUESTA
@@ -1031,6 +1036,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('NOMBRE', 'strSucursal', 'string');
             $objRsmBuilder->addScalarResult('AREA', 'strArea', 'string');
             $objRsmBuilder->addScalarResult('CORREO_CLIENTE', 'strCorreoClt', 'string');
+            $objRsmBuilder->addScalarResult('EDAD_CLIENTE', 'strEdadClt', 'string');
+            $objRsmBuilder->addScalarResult('GENERO_CLIENTE', 'strGeneroClt', 'string');
             $objRsmBuilder->addScalarResult('PROMEDIO', 'strPromedio', 'string');
             $objRsmBuilder->addScalarResult('COMENTARIO', 'strComentario', 'string');
             $objRsmBuilder->addScalarResult('ES_MENOR_3', 'strEsmenor3', 'string');

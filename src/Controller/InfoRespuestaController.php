@@ -86,6 +86,13 @@ class InfoRespuestaController extends AbstractController
         {
             error_log("-------------------------CREATE RESPUESTA--------------------------");
             error_log(print_r($arrayPregunta, TRUE));
+            if(!empty($strEdad) && $strEdad != "SIN EDAD")
+            {
+                if(strlen($strEdad) != 4)
+                {
+                    throw new \Exception("Estimado usuario por favor ingresar su año de Nacimiento, por ejemplo: 1995");
+                }
+            }
             //Si existe correo, lo validamos
             if(!empty($strCorreo) && !filter_var($strCorreo, FILTER_VALIDATE_EMAIL))
             {
@@ -125,6 +132,10 @@ class InfoRespuestaController extends AbstractController
             else
             {
                 $entityCliente=$objCliente;
+                $entityCliente->setEDAD($strEdad);
+                $entityCliente->setGENERO($strGenero);
+                $em->persist($entityCliente);
+                $em->flush();
             }
             //Validamos firma, debido a que si la encuesta permite firma, debe venir firmada
             if($objEncuesta->getPERMITE_FIRMA()=="Si" && empty($strFirma))

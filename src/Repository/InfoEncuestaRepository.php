@@ -62,6 +62,11 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND lower(IE.TITULO) like lower(:strTitulo) ";
                 $objQuery->setParameter("strTitulo", "%" . trim($arrayParametros["strTitulo"]) . "%");
             }
+            if(isset($arrayParametros["intIdEncuesta"]) && !empty($arrayParametros["intIdEncuesta"]))
+            {
+                $strWhere .= " AND IE.ID_ENCUESTA = :intIdEncuesta ";
+                $objQuery->setParameter("intIdEncuesta", $arrayParametros["intIdEncuesta"]);
+            }
             if(isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]))
             {
                 $strWhere .= " AND IEM.ID_EMPRESA = :intIdEmpresa ";

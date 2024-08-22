@@ -53,7 +53,9 @@ class AdmiTipoOpcionRespuestaController extends AbstractController
             {
                 foreach($arrayObjTipoOpcionRespuesta as $arrayItem)
                 {
-                    $arrayTipoOpcionRespuesta [] = array("strDescripcion"     => !empty($arrayItem->getDESCRIPCION())?
+                    $arrayTipoOpcionRespuesta [] = array("intIdTipoOpcionRespuesta" => !empty($arrayItem->getID())?
+                                                                                              $arrayItem->getID():"",
+                                                         "strDescripcion"     => !empty($arrayItem->getDESCRIPCION())?
                                                                                  $arrayItem->getDESCRIPCION():"",
                                                          "strTipoRespuesta"   => !empty($arrayItem->getTIPO_RESPUESTA())?
                                                                                  $arrayItem->getTIPO_RESPUESTA():"",

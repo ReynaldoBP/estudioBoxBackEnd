@@ -654,6 +654,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $intIdEncuesta      = $arrayParametros['intIdEncuesta'] ? $arrayParametros['intIdEncuesta']:'';
         $strTipoPregunta    = $arrayParametros['strTipoPregunta'] ? $arrayParametros['strTipoPregunta']:'';
         $intMes             = $arrayParametros['intMes'] ? $arrayParametros['intMes']:'';
+	    $intAnio            = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:2024;
         $arrayRespuesta     = array();
         $strMensajeError    = '';
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
@@ -673,7 +674,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                                     INNER JOIN INFO_SUCURSAL ISU         ON ISU.ID_SUCURSAL         =  IAR.SUCURSAL_ID 
                                     INNER JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
             $strWhere       = " WHERE IE.ESTADO           = 'ACTIVO'
-                                      AND ICE.ESTADO     !='ELIMINADO' ";
+                                      AND ICE.ESTADO     !='ELIMINADO' 
+				                      AND EXTRACT(YEAR FROM ICE.FE_CREACION ) = :intAnio";
             $strGroupBy     = " GROUP BY ANIO,MES,IP.ID_PREGUNTA,IR.RESPUESTA ";
             $strLimit       = "";
             $strOrder       = " ORDER BY  CANTIDAD DESC ";
@@ -754,6 +756,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strGroupBy = " GROUP BY IR.RESPUESTA,ISU.NOMBRE ";
                 $objRsmBuilder->addScalarResult('SUCURSAL', 'strSucursal', 'string');
             }
+            $objQuery->setParameter("intAnio", $intAnio);
             $strSql       = $strSelect.$strFrom.$strWhere.$strGroupBy.$strOrder.$strLimit;
             $objQuery->setSQL($strSql);
             $arrayRespuesta = $objQuery->getResult();
@@ -1164,7 +1167,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $strArea                 = isset($arrayParametros["strArea"]) && !empty($arrayParametros["strArea"]) ? $arrayParametros["strArea"]:"";
         $intIdEmpresa            = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $intMes                  = isset($arrayParametros["intMes"]) && !empty($arrayParametros["intMes"]) ? $arrayParametros["intMes"]:"";
-        $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:"";
+        $intAnio                 = isset($arrayParametros["intAnio"]) && !empty($arrayParametros["intAnio"]) ? $arrayParametros["intAnio"]:2024;
         $arrayReporteCltEncuesta = array();
         $strMensajeError         = '';
         $objRsmBuilder           = new ResultSetMappingBuilder($this->_em);
@@ -1192,6 +1195,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $strWhere       = " where ie.TITULO = '".$arrayItemPregunta["strEncuesta"]."'
                                         and ip.DESCRIPCION = '".$arrayItemPregunta["strPregunta"]."'
                                         and ip.TIPO_OPCION_RESPUESTA_ID!= 3
+                                        and EXTRACT(YEAR FROM ice.FE_CREACION ) = :intAnio
                                         and EXTRACT(MONTH FROM ice.FE_CREACION) =".$intMes." ";
                     if(!empty($arraySucursal))
                     {
@@ -1205,6 +1209,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                         $objQuery->setParameter("strArea",$strArea);
                         $objQueryCount->setParameter("strArea", $strArea);
                     }
+                    $objQuery->setParameter("intAnio", $intAnio);
+                    $objQueryCount->setParameter("intAnio", $intAnio);
                     $strOrderBy     = " order by ir.respuesta asc ";
                     $strSql         = $strSelectCount.$strFrom.$strWhere.$strOrderBy;
                     $objRsmBuilderCount->addScalarResult('total', 'total', 'integer');

@@ -13,6 +13,7 @@ use FOS\RestBundle\View\View;
 use App\Entity\InfoPregunta;
 use App\Entity\InfoEncuesta;
 use App\Entity\AdmiTipoOpcionRespuesta;
+use App\Entity\InfoOpcionRespuesta;
 class InfoPreguntaController extends AbstractController
 {
     /**
@@ -118,20 +119,21 @@ class InfoPreguntaController extends AbstractController
      */
     public function editPregunta(Request $objRequest)
     {
-        $arrayRequest         = json_decode($objRequest->getContent(),true);
-        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
-        $intIdPregunta        = isset($arrayData["intIdPregunta"]) && !empty($arrayData["intIdPregunta"]) ? $arrayData["intIdPregunta"]:"";
-        $intIdEncuesta        = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
-        $intIdOpcionRespuesta = isset($arrayData["intIdOpcionRespuesta"]) && !empty($arrayData["intIdOpcionRespuesta"]) ? $arrayData["intIdOpcionRespuesta"]:"";
-        $strEsObligatoria     = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
-        $strDescripcion       = isset($arrayData["strDescripcion"]) && !empty($arrayData["strDescripcion"]) ? $arrayData["strDescripcion"]:"";
-        $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
-        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"";
-        $objResponse          = new Response;
-        $strDatetimeActual    = new \DateTime('now');
-        $intStatus            = 200;
-        $em                   = $this->getDoctrine()->getManager();
-        $strMensaje           = "";
+        $arrayRequest             = json_decode($objRequest->getContent(),true);
+        $arrayData                = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdPregunta            = isset($arrayData["intIdPregunta"]) && !empty($arrayData["intIdPregunta"]) ? $arrayData["intIdPregunta"]:"";
+        $intIdEncuesta            = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
+        $intIdTipoOpcionRespuesta = isset($arrayData["intIdTipoOpcionRespuesta"]) && !empty($arrayData["intIdTipoOpcionRespuesta"]) ? $arrayData["intIdTipoOpcionRespuesta"]:"";
+        $strEsObligatoria         = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
+        $strPregunta              = isset($arrayData["strPregunta"]) && !empty($arrayData["strPregunta"]) ? $arrayData["strPregunta"]:"";
+        $strValor                 = isset($arrayData["strValor"]) && !empty($arrayData["strValor"]) ? $arrayData["strValor"]:"";
+        $strEstado                = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
+        $strUsrSesion             = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $objResponse              = new Response;
+        $strDatetimeActual        = new \DateTime('now');
+        $intStatus                = 200;
+        $em                       = $this->getDoctrine()->getManager();
+        $strMensaje               = "";
         try
         {
             if(empty($intIdPregunta))
@@ -142,16 +144,16 @@ class InfoPreguntaController extends AbstractController
             {
                 throw new \Exception("El parámetro intIdEncuesta es obligatorio para editar una pregunta.");
             }
-            if(empty($intIdOpcionRespuesta))
+            if(empty($intIdTipoOpcionRespuesta))
             {
-                throw new \Exception("El parámetro intIdOpcionRespuesta es obligatorio para editar una pregunta.");
+                throw new \Exception("El parámetro intIdTipoOpcionRespuesta es obligatorio para editar una pregunta.");
             }
             $objEncuesta = $this->getDoctrine()->getRepository(InfoEncuesta::class)->find($intIdEncuesta);
             if(empty($objEncuesta) || !is_object($objEncuesta))
             {
                 throw new \Exception("No se encontró la encuesta con los parámetros enviados.");
             }
-            $objOpcionRespuesta = $this->getDoctrine()->getRepository(AdmiTipoOpcionRespuesta::class)->find($intIdOpcionRespuesta);
+            $objOpcionRespuesta = $this->getDoctrine()->getRepository(AdmiTipoOpcionRespuesta::class)->find($intIdTipoOpcionRespuesta);
             if(empty($objOpcionRespuesta) || !is_object($objOpcionRespuesta))
             {
                 throw new \Exception("No se encontró el tipo de opción de respuesta con los parámetros enviados.");
@@ -163,8 +165,51 @@ class InfoPreguntaController extends AbstractController
             }
             $em->getConnection()->beginTransaction();
             $objPregunta->setENCUESTAID($objEncuesta);
+            if(($objOpcionRespuesta->getTIPO_RESPUESTA() == 'DESPLEGABLE' || $objOpcionRespuesta->getTIPO_RESPUESTA() == 'CAJA') && !empty($strValor))
+            {
+                $objInfoOpcionRespuesta = $this->getDoctrine()->getRepository(InfoOpcionRespuesta::class)
+                                               ->findOneBy(array("PREGUNTA_ID" => $objPregunta->getId(),
+                                                                 "ESTADO"      => "ACTIVO"));
+                if(!empty($objInfoOpcionRespuesta) && is_object($objInfoOpcionRespuesta))
+                {
+                    $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
+                    $objInfoOpcionRespuesta->setVALOR($strValor);
+                    $objInfoOpcionRespuesta->setESTADO(strtoupper($strEstado));
+                    $objInfoOpcionRespuesta->setUSRMODIFICACION($strUsrSesion);
+                    $objInfoOpcionRespuesta->setFEMODIFICACION($strDatetimeActual);
+                    $em->persist($objInfoOpcionRespuesta);
+                    $em->flush();
+                }
+                else
+                {
+                    $objInfoOpcionRespuesta = new InfoOpcionRespuesta();
+                    $objInfoOpcionRespuesta->setPREGUNTAID($objPregunta);
+                    $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
+                    $objInfoOpcionRespuesta->setVALOR($strValor);
+                    $objInfoOpcionRespuesta->setESTADO(strtoupper($strEstado));
+                    $objInfoOpcionRespuesta->setUSRCREACION($strUsrSesion);
+                    $objInfoOpcionRespuesta->setFECREACION($strDatetimeActual);
+                    $em->persist($objInfoOpcionRespuesta);
+                    $em->flush();
+                }
+            }
+            else
+            {
+                $objInfoOpcionRespuesta = $this->getDoctrine()->getRepository(InfoOpcionRespuesta::class)
+                                               ->findOneBy(array('PREGUNTA_ID' => $objPregunta->getId(),
+                                                                 "ESTADO"      => "ACTIVO"));
+                if(!empty($objInfoOpcionRespuesta) && is_object($objInfoOpcionRespuesta))
+                {
+                    $objInfoOpcionRespuesta->setVALOR("");
+                    $objInfoOpcionRespuesta->setESTADO("INACTIVO");
+                    $objInfoOpcionRespuesta->setUSRMODIFICACION($strUsrSesion);
+                    $objInfoOpcionRespuesta->setFEMODIFICACION($strDatetimeActual);
+                    $em->persist($objInfoOpcionRespuesta);
+                    $em->flush();
+                }
+            }
             $objPregunta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
-            $objPregunta->setDESCRIPCION($strDescripcion);
+            $objPregunta->setDESCRIPCION($strPregunta);
             $objPregunta->setOBLIGATORIA(strtoupper($strEsObligatoria));
             $objPregunta->setESTADO(strtoupper($strEstado));
             $objPregunta->setUSRMODIFICACION($strUsrSesion);

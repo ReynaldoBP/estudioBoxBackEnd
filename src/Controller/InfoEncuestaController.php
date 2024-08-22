@@ -96,18 +96,20 @@ class InfoEncuestaController extends AbstractController
      */
     public function editEncuesta(Request $objRequest)
     {
-        $arrayRequest         = json_decode($objRequest->getContent(),true);
-        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
-        $intIdEncuesta        = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
-        $strDescripcion       = isset($arrayData["strDescripcion"]) && !empty($arrayData["strDescripcion"]) ? $arrayData["strDescripcion"]:"";
-        $strTitulo            = isset($arrayData["strTitulo"]) && !empty($arrayData["strTitulo"]) ? $arrayData["strTitulo"]:"";
-        $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"";
-        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"";
-        $objResponse          = new Response;
-        $strDatetimeActual    = new \DateTime('now');
-        $intStatus            = 200;
-        $em                   = $this->getDoctrine()->getManager();
-        $strMensaje           = "";
+        $arrayRequest            = json_decode($objRequest->getContent(),true);
+        $arrayData               = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdEncuesta           = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
+        $strDescripcion          = isset($arrayData["strDescripcion"]) && !empty($arrayData["strDescripcion"]) ? $arrayData["strDescripcion"]:"";
+        $strTitulo               = isset($arrayData["strTitulo"]) && !empty($arrayData["strTitulo"]) ? $arrayData["strTitulo"]:"";
+        $strEstado               = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"";
+        $strPermiteDatoAdicional = isset($arrayData["strPermiteDatoAdicional"]) && !empty($arrayData["strPermiteDatoAdicional"]) ? $arrayData["strPermiteDatoAdicional"]:"No";
+        $strPermiteFirma         = isset($arrayData["strPermiteFirma"]) && !empty($arrayData["strPermiteFirma"]) ? $arrayData["strPermiteFirma"]:"No";
+        $strUsrSesion            = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $objResponse             = new Response;
+        $strDatetimeActual       = new \DateTime('now');
+        $intStatus               = 200;
+        $em                      = $this->getDoctrine()->getManager();
+        $strMensaje              = "";
         try
         {
             if(empty($intIdEncuesta))
@@ -123,6 +125,8 @@ class InfoEncuestaController extends AbstractController
             $objEncuesta->setDESCRIPCION($strDescripcion);
             $objEncuesta->setTITULO($strTitulo);
             $objEncuesta->setESTADO(strtoupper($strEstado));
+            $objEncuesta->setPERMITE_FIRMA($strPermiteFirma);
+            $objEncuesta->setPERMITE_DATO_ADICIONAL($strPermiteDatoAdicional);
             $objEncuesta->setUSRMODIFICACION($strUsrSesion);
             $objEncuesta->setFEMODIFICACION($strDatetimeActual);
             $em->persist($objEncuesta);

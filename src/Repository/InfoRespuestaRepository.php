@@ -2,7 +2,6 @@
 
 namespace App\Repository;
 
-namespace App\Repository;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 class InfoRespuestaRepository extends \Doctrine\ORM\EntityRepository

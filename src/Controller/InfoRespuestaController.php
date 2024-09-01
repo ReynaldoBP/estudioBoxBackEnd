@@ -110,7 +110,7 @@ class InfoRespuestaController extends AbstractController
                 throw new \Exception("No se encontró la encuesta con los parámetros enviados.");
             }
             $em->getConnection()->beginTransaction();
-            if(!empty($strCorreo))
+            if(!empty($strCorreo) && $strCorreo != "encuestadoanonimo@hotmail.com")
             {
                 $objCliente = $this->getDoctrine()->getRepository(InfoCliente::class)->findOneBy(array("CORREO" => $strCorreo));
             }

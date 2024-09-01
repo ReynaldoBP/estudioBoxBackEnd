@@ -197,7 +197,7 @@ class InfoPublicidadRepository extends ServiceEntityRepository
         $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         error_log('probando4 '.$intIdEmpresa);
-        $strOrderBy         = " Order by IP.TITULO ASC ";
+        $strOrderBy         = " Order by IP.ID_PUBLICIDAD DESC ";
         try
         {
             $strSelect      = "SELECT DISTINCT IP.ID_PUBLICIDAD, IP.TITULO, IP.ESTADO, IE.NOMBRE_COMERCIAL, ISU.NOMBRE, IAR.AREA, IEC.TITULO AS ENCUESTA, DATE_FORMAT(IP.FE_CREACION, '%Y-%m-%d')AS FE_CREACION ";

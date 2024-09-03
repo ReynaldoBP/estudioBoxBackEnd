@@ -178,15 +178,15 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
                                     INNER JOIN INFO_CLIENTE IC 
                                         ON ICE.CLIENTE_ID = IC.ID_CLIENTE ";
             $strWhere       = " WHERE ICE.ESTADO != 'ELIMINADO' AND EXTRACT(MONTH FROM ICE.FE_CREACION)  = :MES
-                                    AND IC.EDAD!='SIN EDAD'
                                     AND EXTRACT(YEAR FROM ICE.FE_CREACION) = :ANIO ".$strSubWhere."";
             $strGroup       = " GROUP BY GENERACION ";
+            $strOrderBy     = " ORDER BY CANTIDAD ";
             $objQuery->setParameter("MES",$intMes);
             $objQuery->setParameter("ANIO",$intAnio);
 
             $objRsmBuilder->addScalarResult('CANTIDAD', 'intCantidad', 'integer');
             $objRsmBuilder->addScalarResult('GENERACION', 'strGeneracion', 'string');
-            $strSql       = $strSelect.$strFrom.$strWhere.$strGroup;
+            $strSql       = $strSelect.$strFrom.$strWhere.$strGroup.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayCltEncuesta['resultados'] = $objQuery->getResult();
         }

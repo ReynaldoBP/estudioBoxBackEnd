@@ -43,7 +43,8 @@ class InfoUsuarioController extends AbstractController
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
         $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
-        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"webMovil";
+        $strNotificacion      = isset($arrayData["strNotificacion"]) && !empty($arrayData["strNotificacion"]) ? $arrayData["strNotificacion"]:"NO";
+        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"web";
         $objResponse          = new Response;
         $objDatetimeActual    = new \DateTime('now');
         $intStatus            = 200;
@@ -72,6 +73,7 @@ class InfoUsuarioController extends AbstractController
                 $entityUsuario->setTIPOROLID($objTipoRol);
                 $entityUsuario->setCONTRASENIA(md5($strContrasenia));
                 $entityUsuario->setESTADO(strtoupper($strEstado));
+                $entityUsuario->setNOTIFICACION(strtoupper($strNotificacion));
                 $entityUsuario->setUSRCREACION($strUsrSesion);
                 $entityUsuario->setFECREACION($objDatetimeActual);
                 $em->persist($entityUsuario);
@@ -126,6 +128,135 @@ class InfoUsuarioController extends AbstractController
         return $objResponse;
     }
 
+    /**
+     * @Rest\Post("/apiWeb/editUsuario")
+     * 
+     * Documentación para la función 'editUsuario'.
+     *
+     * Función que permite editar usuarios.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 08-09-2024
+     *
+     */
+    public function editUsuario(Request $objRequest)
+    {
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $strIdentificacion    = isset($arrayData["strIdentificacion"]) && !empty($arrayData["strIdentificacion"]) ? $arrayData["strIdentificacion"]:"";
+        $strNombre            = isset($arrayData["strNombre"]) && !empty($arrayData["strNombre"]) ? $arrayData["strNombre"]:"";
+        $strApellido          = isset($arrayData["strApellido"]) && !empty($arrayData["strApellido"]) ? $arrayData["strApellido"]:"";
+        $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
+        $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
+        $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
+        $strNotificacion      = isset($arrayData["strNotificacion"]) && !empty($arrayData["strNotificacion"]) ? $arrayData["strNotificacion"]:"NO";
+        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"webMovil";
+        $objResponse          = new Response;
+        $objDatetimeActual    = new \DateTime('now');
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            $objUsuario = $this->getDoctrine()->getRepository(InfoUsuario::class)->find($intIdUsuario);
+            if(empty($objUsuario) && !is_object($objUsuario))
+            {
+                throw new \Exception('Usuario no existe');
+            }
+            else
+            {
+                if(empty($intIdTipoRol))
+                {
+                    throw new \Exception("El campo idTipoRol es obligatorio, para crear un usuario.");
+                }
+                $objTipoRol = $this->getDoctrine()->getRepository(AdmiTipoRol::class)->find($intIdTipoRol);
+                if(empty($objTipoRol) || !is_object($objTipoRol))
+                {
+                    throw new \Exception("No se encontró el tipo de rol con los parámetros enviados.");
+                }
+                $em->getConnection()->beginTransaction();
+                $objUsuario->setIDENTIFICACION($strIdentificacion);
+                $objUsuario->setNOMBRE($strNombre);
+                $objUsuario->setAPELLIDO($strApellido);
+                $objUsuario->setCORREO($strCorreo);
+                $objUsuario->setTIPOROLID($objTipoRol);
+                $objUsuario->setESTADO(strtoupper($strEstado));
+                $objUsuario->setNOTIFICACION(strtoupper($strNotificacion));
+                $objUsuario->setUSRCREACION($strUsrSesion);
+                $objUsuario->setFECREACION($objDatetimeActual);
+                $em->persist($objUsuario);
+                $em->flush();
+                if($objTipoRol->getDESCRIPCIONTIPOROL()=="EMPRESA")
+                {
+                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $objUsuarioEmpresa = $this->getDoctrine()
+                                              ->getRepository(InfoUsuarioEmpresa::class)
+                                              ->findOneBy($arrayParametrosPerfil);
+                    if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
+                    {
+                        $em->remove($objUsuarioEmpresa);
+                        $em->flush();
+                    }
+                    if(empty($intIdEmpresa) || $intIdEmpresa == "")
+                    {
+                        throw new \Exception("El parámetro intIdEmpresa es obligatorio cuando el tipo de rol es Empresa.");
+                    }
+                    else
+                    {
+                        $objEmpresa = $this->getDoctrine()->getRepository(InfoEmpresa::class)->find($intIdEmpresa);
+                        if(empty($objEmpresa) || !is_object($objEmpresa))
+                        {
+                            throw new \Exception("No se encontró la empresa con los parámetros enviados.");
+                        }
+                    }
+                    $entityUsuarioEmpresa = new InfoUsuarioEmpresa();
+                    $entityUsuarioEmpresa->setUSUARIOID($objUsuario);
+                    $entityUsuarioEmpresa->setEMPRESAID($objEmpresa);
+                    $entityUsuarioEmpresa->setESTADO(strtoupper($strEstado));
+                    $entityUsuarioEmpresa->setUSRCREACION($strUsrSesion);
+                    $entityUsuarioEmpresa->setFECREACION($objDatetimeActual);
+                    $em->persist($entityUsuarioEmpresa);
+                    $em->flush();
+                }
+                else
+                {
+                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $objUsuarioEmpresa = $this->getDoctrine()
+                                              ->getRepository(InfoUsuarioEmpresa::class)
+                                              ->findOneBy($arrayParametrosPerfil);
+                    if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
+                    {
+                        $em->remove($objUsuarioEmpresa);
+                        $em->flush();
+                    }
+                }
+                $strMensaje = "¡Usuario editado con éxito!";
+                if($em->getConnection()->isTransactionActive())
+                {
+                    $em->getConnection()->commit();
+                    $em->getConnection()->close();
+                }
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            if($em->getConnection()->isTransactionActive())
+            {
+                $em->getConnection()->rollback();
+            }
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
     /**
      * @Rest\Post("/apiWeb/getLogin")
      * 
@@ -203,6 +334,8 @@ class InfoUsuarioController extends AbstractController
         $arrayRequest         = json_decode($objRequest->getContent(),true);
         $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
+        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $intIdEmpresaPorUsuario = isset($arrayData["intIdEmpresaPorUsuario"]) && !empty($arrayData["intIdEmpresaPorUsuario"]) ? $arrayData["intIdEmpresaPorUsuario"]:"";
         $objResponse          = new Response;
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
@@ -210,7 +343,9 @@ class InfoUsuarioController extends AbstractController
         $strMensaje           = "";
         try
         {
-            $arrayParametros = array('strEstado'    => "ACTIVO");
+            $arrayParametros = array("strEstado"    => "ACTIVO",
+                                     "intIdUsuario" => $intIdUsuario,
+                                     "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
             $arrayUsuarios   = $this->getDoctrine()
                                     ->getRepository(InfoUsuario::class)
                                     ->getUsuariosCriterio($arrayParametros);

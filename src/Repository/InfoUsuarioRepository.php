@@ -18,18 +18,21 @@ class InfoUsuarioRepository extends \Doctrine\ORM\EntityRepository
      */
     public function getUsuariosCriterio($arrayParametros)
     {
-        $strEstado          = $arrayParametros['strEstado'] ? $arrayParametros['strEstado']:array('ACTIVO','INACTIVO','ELIMINADO');
-        $arrayResultado     = array();
-        $strMensajeError    = '';
-        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
-        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
-        $objRsmBuilderCount = new ResultSetMappingBuilder($this->_em);
-        $objQueryCount      = $this->_em->createNativeQuery(null, $objRsmBuilderCount);
+        $strEstado              = $arrayParametros['strEstado'] ? $arrayParametros['strEstado']:array('ACTIVO','INACTIVO','ELIMINADO');
+        $intIdUsuario           = $arrayParametros['intIdUsuario'] ? $arrayParametros['intIdUsuario']:"";
+        $intIdEmpresaPorUsuario = $arrayParametros['intIdEmpresaPorUsuario'] ? $arrayParametros['intIdEmpresaPorUsuario']:"";
+        $arrayResultado         = array();
+        $strMensajeError        = '';
+        $objRsmBuilder          = new ResultSetMappingBuilder($this->_em);
+        $objQuery               = $this->_em->createNativeQuery(null, $objRsmBuilder);
+        $objRsmBuilderCount     = new ResultSetMappingBuilder($this->_em);
+        $objQueryCount          = $this->_em->createNativeQuery(null, $objRsmBuilderCount);
         try
         {
             $strSelect      = "SELECT IU.ID_USUARIO,IU.NOMBRE,IU.APELLIDO, IU.IDENTIFICACION, IU.CORREO,IU.TIPO_ROL_ID,
                                     IU.ESTADO,IU.USR_CREACION,IU.FE_CREACION,ATR.DESCRIPCION_TIPO_ROL,ATR.ID_TIPO_ROL,
                                     IU.NOTIFICACION,
+                                    IE.ID_EMPRESA,
                                     CASE
                                     WHEN ATR.DESCRIPCION_TIPO_ROL ='ADMINISTRADOR' 
                                     THEN ''
@@ -44,12 +47,24 @@ class InfoUsuarioRepository extends \Doctrine\ORM\EntityRepository
             $strOrderBy     = " Order by IU.FE_CREACION ASC ";
             $objQuery->setParameter("strEstado",$strEstado);
             $objQueryCount->setParameter("strEstado",$strEstado);
-
+            if(!empty($intIdUsuario))
+            {
+                $strWhere       .= " AND IU.ID_USUARIO = :intIdUsuario ";
+                $objQuery->setParameter("intIdUsuario",$intIdUsuario);
+                $objQueryCount->setParameter("intIdUsuario",$intIdUsuario);
+            }
+            if(!empty($intIdEmpresaPorUsuario))
+            {
+                $strWhere       .= " AND IE.ID_EMPRESA = (SELECT EMPRESA_ID FROM INFO_USUARIO_EMPRESA WHERE USUARIO_ID=:intIdEmpresaPorUsuario) ";
+                $objQuery->setParameter("intIdEmpresaPorUsuario",$intIdEmpresaPorUsuario);
+                $objQueryCount->setParameter("intIdEmpresaPorUsuario",$intIdEmpresaPorUsuario);
+            }
             $objRsmBuilder->addScalarResult('ID_USUARIO', 'intIdUsuario', 'integer');
             $objRsmBuilder->addScalarResult('NOMBRE', 'strNombre', 'string');
             $objRsmBuilder->addScalarResult('APELLIDO', 'strApellido', 'string');
             $objRsmBuilder->addScalarResult('IDENTIFICACION', 'strIdentificacion', 'string');
             $objRsmBuilder->addScalarResult('CORREO', 'strCorreo', 'string');
+            $objRsmBuilder->addScalarResult('ID_EMPRESA', 'intIdEmpresa', 'integer');
             $objRsmBuilder->addScalarResult('TIPO_ROL_ID', 'intTipoRolId', 'integer');
             $objRsmBuilder->addScalarResult('ESTADO', 'strEstado', 'string');
             $objRsmBuilder->addScalarResult('NOTIFICACION', 'strNotificacion', 'string');

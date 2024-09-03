@@ -40,50 +40,63 @@ class InfoPreguntaController extends AbstractController
      */
     public function createPregunta(Request $objRequest)
     {
-        $arrayRequest         = json_decode($objRequest->getContent(),true);
-        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
-        $intIdEncuesta        = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
-        $intIdOpcionRespuesta = isset($arrayData["intIdOpcionRespuesta"]) && !empty($arrayData["intIdOpcionRespuesta"]) ? $arrayData["intIdOpcionRespuesta"]:"";
-        $strEsObligatoria     = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
-        $strDescripcion       = isset($arrayData["strDescripcion"]) && !empty($arrayData["strDescripcion"]) ? $arrayData["strDescripcion"]:"";
-        $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
-        $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"";
-        $objResponse          = new Response;
-        $strDatetimeActual    = new \DateTime('now');
-        $intStatus            = 200;
-        $em                   = $this->getDoctrine()->getManager();
-        $strMensaje           = "";
+        $arrayRequest             = json_decode($objRequest->getContent(),true);
+        $arrayData                = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdEncuesta            = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
+        $intIdTipoOpcionRespuesta = isset($arrayData["intIdTipoOpcionRespuesta"]) && !empty($arrayData["intIdTipoOpcionRespuesta"]) ? $arrayData["intIdTipoOpcionRespuesta"]:"";
+        $strEsObligatoria         = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
+        $strPregunta              = isset($arrayData["strPregunta"]) && !empty($arrayData["strPregunta"]) ? $arrayData["strPregunta"]:"";
+        $strValor                 = isset($arrayData["strValor"]) && !empty($arrayData["strValor"]) ? $arrayData["strValor"]:"";
+        $strEstado                = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
+        $strUsrSesion             = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
+        $objResponse              = new Response;
+        $strDatetimeActual        = new \DateTime('now');
+        $intStatus                = 200;
+        $em                       = $this->getDoctrine()->getManager();
+        $strMensaje               = "";
         try
         {
             if(empty($intIdEncuesta))
             {
                 throw new \Exception("El parámetro intIdEncuesta es obligatorio para crear una pregunta.");
             }
-            if(empty($intIdOpcionRespuesta))
+            if(empty($intIdTipoOpcionRespuesta))
             {
-                throw new \Exception("El parámetro intIdOpcionRespuesta es obligatorio para crear una pregunta.");
+                throw new \Exception("El parámetro intIdTipoOpcionRespuesta es obligatorio para crear una pregunta.");
             }
             $objEncuesta = $this->getDoctrine()->getRepository(InfoEncuesta::class)->find($intIdEncuesta);
             if(empty($objEncuesta) || !is_object($objEncuesta))
             {
                 throw new \Exception("No se encontró la encuesta con los parámetros enviados.");
             }
-            $objOpcionRespuesta = $this->getDoctrine()->getRepository(AdmiTipoOpcionRespuesta::class)->find($intIdOpcionRespuesta);
+            $objOpcionRespuesta = $this->getDoctrine()->getRepository(AdmiTipoOpcionRespuesta::class)->find($intIdTipoOpcionRespuesta);
             if(empty($objOpcionRespuesta) || !is_object($objOpcionRespuesta))
             {
                 throw new \Exception("No se encontró el tipo de opción de respuesta con los parámetros enviados.");
             }
             $em->getConnection()->beginTransaction();
-            $entityEncuesta = new InfoPregunta();
-            $entityEncuesta->setENCUESTAID($objEncuesta);
-            $entityEncuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
-            $entityEncuesta->setDESCRIPCION($strDescripcion);
-            $entityEncuesta->setOBLIGATORIA(strtoupper($strEsObligatoria));
-            $entityEncuesta->setESTADO(strtoupper($strEstado));
-            $entityEncuesta->setUSRCREACION($strUsrSesion);
-            $entityEncuesta->setFECREACION($strDatetimeActual);
-            $em->persist($entityEncuesta);
+            $objPregunta = new InfoPregunta();
+            $objPregunta->setENCUESTAID($objEncuesta);
+            $objPregunta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
+            $objPregunta->setDESCRIPCION($strPregunta);
+            $objPregunta->setOBLIGATORIA(strtoupper($strEsObligatoria));
+            $objPregunta->setESTADO(strtoupper($strEstado));
+            $objPregunta->setUSRCREACION($strUsrSesion);
+            $objPregunta->setFECREACION($strDatetimeActual);
+            $em->persist($objPregunta);
             $em->flush();
+            if(($objOpcionRespuesta->getTIPO_RESPUESTA() == 'DESPLEGABLE' || $objOpcionRespuesta->getTIPO_RESPUESTA() == 'CAJA') && !empty($strValor))
+            {
+                $objInfoOpcionRespuesta = new InfoOpcionRespuesta();
+                $objInfoOpcionRespuesta->setPREGUNTAID($objPregunta);
+                $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
+                $objInfoOpcionRespuesta->setVALOR($strValor);
+                $objInfoOpcionRespuesta->setESTADO(strtoupper($strEstado));
+                $objInfoOpcionRespuesta->setUSRCREACION($strUsrSesion);
+                $objInfoOpcionRespuesta->setFECREACION($strDatetimeActual);
+                $em->persist($objInfoOpcionRespuesta);
+                $em->flush();
+            }
             $strMensaje = "¡Pregunta creada con éxito!";
             if($em->getConnection()->isTransactionActive())
             {

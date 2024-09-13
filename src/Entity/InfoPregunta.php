@@ -40,6 +40,11 @@ class InfoPregunta
     private $TIPO_OPCION_RESPUESTA_ID;
 
     /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $ORDEN;
+
+    /**
      * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $DESCRIPCION;
@@ -122,6 +127,18 @@ class InfoPregunta
     public function setTIPOOPCIONRESPUESTAID(\App\Entity\AdmiTipoOpcionRespuesta $TIPO_OPCION_RESPUESTA_ID = null)
     {
         $this->TIPO_OPCION_RESPUESTA_ID = $TIPO_OPCION_RESPUESTA_ID;
+
+        return $this;
+    }
+
+    public function getORDEN(): ?int
+    {
+        return $this->ORDEN;
+    }
+
+    public function setORDEN(?int $ORDEN): self
+    {
+        $this->ORDEN = $ORDEN;
 
         return $this;
     }

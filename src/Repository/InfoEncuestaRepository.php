@@ -42,7 +42,7 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             // 5 * 60 * 1000 =300000 // 5 minutos de inactividad
             //COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA) * 60000,300000) AS TIEMPO ";
             //COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA) * 1000,30000) AS TIEMPO ";
-            $strSelect  = " SELECT IE.*,IEM.NOMBRE_COMERCIAL,IA.AREA,ISU.NOMBRE AS SUCURSAL,
+            $strSelect  = " SELECT IE.*,IEM.ID_EMPRESA,IEM.NOMBRE_COMERCIAL,IA.ID_AREA,IA.AREA,ISU.ID_SUCURSAL,ISU.NOMBRE AS SUCURSAL,
                             COALESCE((SELECT IPU.TIEMPO FROM INFO_PUBLICIDAD IPU WHERE IPU.ENCUESTA_ID = IE.ID_ENCUESTA AND IPU.ESTADO='ACTIVO') * 60000,300000) AS TIEMPO ";
             $strFrom    = " FROM INFO_ENCUESTA IE 
                             JOIN INFO_AREA IA ON IE.AREA_ID=IA.ID_AREA
@@ -107,10 +107,13 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("ID_ENCUESTA", "intIdEncuesta", "integer");
             $objRsmBuilder->addScalarResult("DESCRIPCION", "strDescripcion", "string");
             $objRsmBuilder->addScalarResult("TITULO", "strTitulo", "string");
+            $objRsmBuilder->addScalarResult("ID_EMPRESA", "intIdEmpresa", "integer");
             $objRsmBuilder->addScalarResult("NOMBRE_COMERCIAL", "strEmpresa", "string");
             $objRsmBuilder->addScalarResult("PERMITE_FIRMA", "strPermiteFirma", "string");
             $objRsmBuilder->addScalarResult('PERMITE_DATO_ADICIONAL', 'strPermiteDatoAdicional', 'string');
+            $objRsmBuilder->addScalarResult("ID_AREA", "intIdArea", "integer");
             $objRsmBuilder->addScalarResult("AREA", "strArea", "string");
+            $objRsmBuilder->addScalarResult("ID_SUCURSAL", "intIdSucursal", "integer");
             $objRsmBuilder->addScalarResult("SUCURSAL", "strSucursal", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
             $objRsmBuilder->addScalarResult("USR_CREACION", "strusrCreacion", "string");

@@ -40,6 +40,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
         {
             $strSelect  = " SELECT ID_PREGUNTA,
                                    IP.DESCRIPCION AS PREGUNTA,
+                                   IP.ORDEN,
                                    IP.OBLIGATORIA,
                                    IE.TITULO AS ENCUESTA,
                                    ATOR.ID_TIPO_OPCION_RESPUESTA,
@@ -62,7 +63,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
                                 JOIN ADMI_TIPO_OPCION_RESPUESTA ATOR ON ATOR.ID_TIPO_OPCION_RESPUESTA=IP.TIPO_OPCION_RESPUESTA_ID
                                     AND ATOR.ESTADO='ACTIVO' ";
             $strWhere   = " WHERE IP.ESTADO IN ('ACTIVO')";
-            $strOrderBy = " ORDER BY IP.FE_CREACION ASC ";
+            $strOrderBy = " ORDER BY IP.ORDEN ASC ";
             if(isset($arrayParametros["intIdPregunta"]) && !empty($arrayParametros["intIdPregunta"]))
             {
                 $strWhere .= " AND IP.ID_PREGUNTA = :intIdPregunta ";
@@ -104,6 +105,7 @@ class InfoPreguntaRepository extends \Doctrine\ORM\EntityRepository
             }
             $objRsmBuilder->addScalarResult("ID_PREGUNTA", "intIdPregunta", "integer");
             $objRsmBuilder->addScalarResult("PREGUNTA", "strPregunta", "string");
+            $objRsmBuilder->addScalarResult("ORDEN", "intOrden", "integer");
             $objRsmBuilder->addScalarResult("OBLIGATORIA", "strEsObligatoria", "string");
             $objRsmBuilder->addScalarResult("ENCUESTA", "strEncuesta", "string");
             $objRsmBuilder->addScalarResult("ID_TIPO_OPCION_RESPUESTA", "intIdTipoOpcionRespuesta", "string");

@@ -14,6 +14,7 @@ use App\Entity\InfoEncuesta;
 use App\Entity\InfoUsuario;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoArea;
 class InfoEncuestaController extends AbstractController
 {
     /**
@@ -44,16 +45,28 @@ class InfoEncuestaController extends AbstractController
         $strDescripcion       = isset($arrayData["strDescripcion"]) && !empty($arrayData["strDescripcion"]) ? $arrayData["strDescripcion"]:"";
         $strTitulo            = isset($arrayData["strTitulo"]) && !empty($arrayData["strTitulo"]) ? $arrayData["strTitulo"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"ACTIVO";
+        $intIdArea            = isset($arrayData["intIdArea"]) && !empty($arrayData["intIdArea"]) ? $arrayData["intIdArea"]:"";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"";
         $objResponse          = new Response;
         $strDatetimeActual    = new \DateTime('now');
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $intIdEncuesta        = 0;
         try
         {
+            if(empty($intIdArea))
+            {
+                throw new \Exception("El parámetro intIdArea es obligatorio para crear una encuesta.");
+            }
+            $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($intIdArea);
+            if(empty($objArea) || !is_object($objArea))
+            {
+                throw new \Exception("No se encontró el area con los parámetros enviados.");
+            }
             $em->getConnection()->beginTransaction();
             $entityEncuesta = new InfoEncuesta();
+            $entityEncuesta->setAREAID($objArea);
             $entityEncuesta->setDESCRIPCION($strDescripcion);
             $entityEncuesta->setTITULO($strTitulo);
             $entityEncuesta->setESTADO(strtoupper($strEstado));
@@ -61,6 +74,7 @@ class InfoEncuestaController extends AbstractController
             $entityEncuesta->setFECREACION($strDatetimeActual);
             $em->persist($entityEncuesta);
             $em->flush();
+            $intIdEncuesta = $entityEncuesta->getId();
             $strMensaje = "¡Encuesta creada con éxito!";
             if($em->getConnection()->isTransactionActive())
             {
@@ -77,8 +91,9 @@ class InfoEncuestaController extends AbstractController
             }
             $strMensaje = $ex->getMessage();
         }
-        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
-                                                   "strMensaje" => $strMensaje)));
+        $objResponse->setContent(json_encode(array("intStatus"     => $intStatus,
+                                                   "intIdEncuesta" => $intIdEncuesta,
+                                                   "strMensaje"    => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }
@@ -104,6 +119,7 @@ class InfoEncuestaController extends AbstractController
         $strEstado               = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"";
         $strPermiteDatoAdicional = isset($arrayData["strPermiteDatoAdicional"]) && !empty($arrayData["strPermiteDatoAdicional"]) ? $arrayData["strPermiteDatoAdicional"]:"No";
         $strPermiteFirma         = isset($arrayData["strPermiteFirma"]) && !empty($arrayData["strPermiteFirma"]) ? $arrayData["strPermiteFirma"]:"No";
+        $intIdArea               = isset($arrayData["intIdArea"]) && !empty($arrayData["intIdArea"]) ? $arrayData["intIdArea"]:"";
         $strUsrSesion            = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
         $objResponse             = new Response;
         $strDatetimeActual       = new \DateTime('now');
@@ -121,8 +137,14 @@ class InfoEncuestaController extends AbstractController
             {
                 throw new \Exception("No se encontró la encuesta con los parámetros enviados.");
             }
+            $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($intIdArea);
+            if(empty($objArea) || !is_object($objArea))
+            {
+                throw new \Exception("No se encontró el area con los parámetros enviados.");
+            }
             $em->getConnection()->beginTransaction();
             $objEncuesta->setDESCRIPCION($strDescripcion);
+            $objEncuesta->setAREAID($objArea);
             $objEncuesta->setTITULO($strTitulo);
             $objEncuesta->setESTADO(strtoupper($strEstado));
             $objEncuesta->setPERMITE_FIRMA($strPermiteFirma);

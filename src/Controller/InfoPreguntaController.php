@@ -44,6 +44,7 @@ class InfoPreguntaController extends AbstractController
         $arrayData                = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
         $intIdEncuesta            = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
         $intIdTipoOpcionRespuesta = isset($arrayData["intIdTipoOpcionRespuesta"]) && !empty($arrayData["intIdTipoOpcionRespuesta"]) ? $arrayData["intIdTipoOpcionRespuesta"]:"";
+        $intOrden                 = isset($arrayData["intOrden"]) && !empty($arrayData["intOrden"]) ? $arrayData["intOrden"]:"";
         $strEsObligatoria         = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
         $strPregunta              = isset($arrayData["strPregunta"]) && !empty($arrayData["strPregunta"]) ? $arrayData["strPregunta"]:"";
         $strValor                 = isset($arrayData["strValor"]) && !empty($arrayData["strValor"]) ? $arrayData["strValor"]:"";
@@ -78,6 +79,7 @@ class InfoPreguntaController extends AbstractController
             $objPregunta = new InfoPregunta();
             $objPregunta->setENCUESTAID($objEncuesta);
             $objPregunta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
+            $objPregunta->setORDEN($intOrden);
             $objPregunta->setDESCRIPCION($strPregunta);
             $objPregunta->setOBLIGATORIA(strtoupper($strEsObligatoria));
             $objPregunta->setESTADO(strtoupper($strEstado));
@@ -137,6 +139,7 @@ class InfoPreguntaController extends AbstractController
         $intIdPregunta            = isset($arrayData["intIdPregunta"]) && !empty($arrayData["intIdPregunta"]) ? $arrayData["intIdPregunta"]:"";
         $intIdEncuesta            = isset($arrayData["intIdEncuesta"]) && !empty($arrayData["intIdEncuesta"]) ? $arrayData["intIdEncuesta"]:"";
         $intIdTipoOpcionRespuesta = isset($arrayData["intIdTipoOpcionRespuesta"]) && !empty($arrayData["intIdTipoOpcionRespuesta"]) ? $arrayData["intIdTipoOpcionRespuesta"]:"";
+        $intOrden                 = isset($arrayData["intOrden"]) && !empty($arrayData["intOrden"]) ? $arrayData["intOrden"]:"";
         $strEsObligatoria         = isset($arrayData["strEsObligatoria"]) && !empty($arrayData["strEsObligatoria"]) ? $arrayData["strEsObligatoria"]:"NO";
         $strPregunta              = isset($arrayData["strPregunta"]) && !empty($arrayData["strPregunta"]) ? $arrayData["strPregunta"]:"";
         $strValor                 = isset($arrayData["strValor"]) && !empty($arrayData["strValor"]) ? $arrayData["strValor"]:"";
@@ -181,8 +184,7 @@ class InfoPreguntaController extends AbstractController
             if(($objOpcionRespuesta->getTIPO_RESPUESTA() == 'DESPLEGABLE' || $objOpcionRespuesta->getTIPO_RESPUESTA() == 'CAJA') && !empty($strValor))
             {
                 $objInfoOpcionRespuesta = $this->getDoctrine()->getRepository(InfoOpcionRespuesta::class)
-                                               ->findOneBy(array("PREGUNTA_ID" => $objPregunta->getId(),
-                                                                 "ESTADO"      => "ACTIVO"));
+                                               ->findOneBy(array("PREGUNTA_ID" => $objPregunta->getId()));
                 if(!empty($objInfoOpcionRespuesta) && is_object($objInfoOpcionRespuesta))
                 {
                     $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
@@ -221,6 +223,7 @@ class InfoPreguntaController extends AbstractController
                     $em->flush();
                 }
             }
+            $objPregunta->setORDEN($intOrden);
             $objPregunta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
             $objPregunta->setDESCRIPCION($strPregunta);
             $objPregunta->setOBLIGATORIA(strtoupper($strEsObligatoria));

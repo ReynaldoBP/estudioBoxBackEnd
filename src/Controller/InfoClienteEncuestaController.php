@@ -685,6 +685,7 @@ class InfoClienteEncuestaController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $arrayDataPregunta    = array();
         try
         {
             if(empty($intIdEmpresa))
@@ -725,6 +726,11 @@ class InfoClienteEncuestaController extends AbstractController
                     $intIdEmpresa = $objSucursal->getEMPRESAID()->getId();
                     $arrayParametros["intIdEmpresa"] = $intIdEmpresa;
                 }
+            }
+            error_log(($arrayParametros["strReporteP"]));
+            if (isset($arrayParametros["strReporteP"]) && !empty($arrayParametros["strReporteP"]) && $arrayParametros["strReporteP"]=='S') 
+            {                
+                $arrayParametros["intIdEmpresa"] = '14';
             }
             $arrayParametrosPregunta = array("strEncuesta"  => $arrayParametros["strTitulo"],
                                              "intIdEmpresa" => $intIdEmpresa,

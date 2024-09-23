@@ -15,6 +15,7 @@ use App\Entity\InfoUsuario;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoArea;
+use App\Controller\InfoBitacoraController;
 class InfoEncuestaController extends AbstractController
 {
     /**
@@ -126,6 +127,8 @@ class InfoEncuestaController extends AbstractController
         $intStatus               = 200;
         $em                      = $this->getDoctrine()->getManager();
         $strMensaje              = "";
+        $objApiBitacora          = new InfoBitacoraController();
+        $objApiBitacora->setContainer($this->container);
         try
         {
             if(empty($intIdEncuesta))
@@ -142,6 +145,30 @@ class InfoEncuestaController extends AbstractController
             {
                 throw new \Exception("No se encontró el area con los parámetros enviados.");
             }
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Título",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getTITULO(),
+                                           'VALOR_ACTUAL'   => $strTitulo,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Descripción",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getDESCRIPCION(),
+                                           'VALOR_ACTUAL'   => $strDescripcion,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Area",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getAREAID()->getAREA(),
+                                           'VALOR_ACTUAL'   => $objArea->getAREA(),
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Estado",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getESTADO(),
+                                           'VALOR_ACTUAL'   => $strEstado,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Permite Firma",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_FIRMA(),
+                                           'VALOR_ACTUAL'   => $strPermiteFirma,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Permite Dato Adicional",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_DATO_ADICIONAL(),
+                                           'VALOR_ACTUAL'   => $strPermiteDatoAdicional,
+                                           'USUARIO_ID'     => $strUsrSesion);
             $em->getConnection()->beginTransaction();
             $objEncuesta->setDESCRIPCION($strDescripcion);
             $objEncuesta->setAREAID($objArea);
@@ -158,6 +185,15 @@ class InfoEncuestaController extends AbstractController
             {
                 $em->getConnection()->commit();
                 $em->getConnection()->close();
+            }
+            if(!empty($arrayBitacoraDetalle))
+            {
+                $objApiBitacora->createBitacora(array("strAccion"            => "Edición",
+                                                      "strModulo"            => "Encuesta",
+                                                      "strUsuarioCreacion"   => $strUsrSesion,
+                                                      "intReferenciaId"      => $objEncuesta->getId(),
+                                                      "strReferenciaValor"   => $objEncuesta->getTITULO(),
+                                                      "arrayBitacoraDetalle" => $arrayBitacoraDetalle));
             }
         }
         catch(\Exception $ex)

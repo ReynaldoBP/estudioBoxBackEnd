@@ -14,6 +14,7 @@ use App\Entity\InfoPregunta;
 use App\Entity\InfoEncuesta;
 use App\Entity\AdmiTipoOpcionRespuesta;
 use App\Entity\InfoOpcionRespuesta;
+use App\Controller\InfoBitacoraController;
 class InfoPreguntaController extends AbstractController
 {
     /**
@@ -150,6 +151,8 @@ class InfoPreguntaController extends AbstractController
         $intStatus                = 200;
         $em                       = $this->getDoctrine()->getManager();
         $strMensaje               = "";
+        $objApiBitacora           = new InfoBitacoraController();
+        $objApiBitacora->setContainer($this->container);
         try
         {
             if(empty($intIdPregunta))
@@ -181,12 +184,32 @@ class InfoPreguntaController extends AbstractController
             }
             $em->getConnection()->beginTransaction();
             $objPregunta->setENCUESTAID($objEncuesta);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Descripción",
+                                           'VALOR_ANTERIOR' => $objPregunta->getDESCRIPCION(),
+                                           'VALOR_ACTUAL'   => $strPregunta,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Encuesta",
+                                           'VALOR_ANTERIOR' => $objPregunta->getENCUESTAID()->getTITULO(),
+                                           'VALOR_ACTUAL'   => $objEncuesta->getTITULO(),
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Orden",
+                                           'VALOR_ANTERIOR' => $objPregunta->getORDEN(),
+                                           'VALOR_ACTUAL'   => $intOrden,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Tipo Opción Respuesta",
+                                           'VALOR_ANTERIOR' => $objPregunta->getTIPOOPCIONRESPUESTAID()->getTIPO_RESPUESTA(),
+                                           'VALOR_ACTUAL'   => $objOpcionRespuesta->getTIPO_RESPUESTA(),
+                                           'USUARIO_ID'     => $strUsrSesion);
             if(($objOpcionRespuesta->getTIPO_RESPUESTA() == 'DESPLEGABLE' || $objOpcionRespuesta->getTIPO_RESPUESTA() == 'CAJA') && !empty($strValor))
             {
                 $objInfoOpcionRespuesta = $this->getDoctrine()->getRepository(InfoOpcionRespuesta::class)
                                                ->findOneBy(array("PREGUNTA_ID" => $objPregunta->getId()));
                 if(!empty($objInfoOpcionRespuesta) && is_object($objInfoOpcionRespuesta))
                 {
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Opción de Respuesta",
+                                                   'VALOR_ANTERIOR' => $objInfoOpcionRespuesta->getVALOR(),
+                                                   'VALOR_ACTUAL'   => $strValor,
+                                                   'USUARIO_ID'     => $strUsrSesion);
                     $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
                     $objInfoOpcionRespuesta->setVALOR($strValor);
                     $objInfoOpcionRespuesta->setESTADO(strtoupper($strEstado));
@@ -197,6 +220,10 @@ class InfoPreguntaController extends AbstractController
                 }
                 else
                 {
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Opción de Respuesta",
+                                                   'VALOR_ANTERIOR' => "",
+                                                   'VALOR_ACTUAL'   => $strValor,
+                                                   'USUARIO_ID'     => $strUsrSesion);
                     $objInfoOpcionRespuesta = new InfoOpcionRespuesta();
                     $objInfoOpcionRespuesta->setPREGUNTAID($objPregunta);
                     $objInfoOpcionRespuesta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
@@ -215,6 +242,10 @@ class InfoPreguntaController extends AbstractController
                                                                  "ESTADO"      => "ACTIVO"));
                 if(!empty($objInfoOpcionRespuesta) && is_object($objInfoOpcionRespuesta))
                 {
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Opción de Respuesta",
+                                                   'VALOR_ANTERIOR' => $objInfoOpcionRespuesta->getVALOR(),
+                                                   'VALOR_ACTUAL'   => "",
+                                                   'USUARIO_ID'     => $strUsrSesion);
                     $objInfoOpcionRespuesta->setVALOR("");
                     $objInfoOpcionRespuesta->setESTADO("INACTIVO");
                     $objInfoOpcionRespuesta->setUSRMODIFICACION($strUsrSesion);
@@ -223,6 +254,14 @@ class InfoPreguntaController extends AbstractController
                     $em->flush();
                 }
             }
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Obligatoria",
+                                           'VALOR_ANTERIOR' => $objPregunta->getOBLIGATORIA(),
+                                           'VALOR_ACTUAL'   => $strEsObligatoria,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Estado",
+                                           'VALOR_ANTERIOR' => $objPregunta->getESTADO(),
+                                           'VALOR_ACTUAL'   => $strEstado,
+                                           'USUARIO_ID'     => $strUsrSesion);
             $objPregunta->setORDEN($intOrden);
             $objPregunta->setTIPOOPCIONRESPUESTAID($objOpcionRespuesta);
             $objPregunta->setDESCRIPCION($strPregunta);
@@ -237,6 +276,15 @@ class InfoPreguntaController extends AbstractController
             {
                 $em->getConnection()->commit();
                 $em->getConnection()->close();
+            }
+            if(!empty($arrayBitacoraDetalle))
+            {
+                $objApiBitacora->createBitacora(array("strAccion"            => "Edición",
+                                                      "strModulo"            => "Preguntas",
+                                                      "strUsuarioCreacion"   => $strUsrSesion,
+                                                      "intReferenciaId"      => $objPregunta->getId(),
+                                                      "strReferenciaValor"   => $objPregunta->getDESCRIPCION(),
+                                                      "arrayBitacoraDetalle" => $arrayBitacoraDetalle));
             }
         }
         catch(\Exception $ex)

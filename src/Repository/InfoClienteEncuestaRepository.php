@@ -937,7 +937,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         try
         {
-            if($boolEstrella == "Si")
+            if($boolEstrella == "Si_")
             {
                 $strSubSelect = " (SELECT ROUND(AVG(IR.RESPUESTA),2) AS PROMEDIO
                                     FROM INFO_RESPUESTA IR

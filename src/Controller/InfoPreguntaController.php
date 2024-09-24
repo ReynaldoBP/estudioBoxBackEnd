@@ -14,6 +14,9 @@ use App\Entity\InfoPregunta;
 use App\Entity\InfoEncuesta;
 use App\Entity\AdmiTipoOpcionRespuesta;
 use App\Entity\InfoOpcionRespuesta;
+use App\Entity\InfoUsuario;
+use App\Entity\AdmiTipoRol;
+use App\Entity\InfoUsuarioEmpresa;
 use App\Controller\InfoBitacoraController;
 class InfoPreguntaController extends AbstractController
 {
@@ -318,6 +321,7 @@ class InfoPreguntaController extends AbstractController
     {
         $arrayRequest         = json_decode($objRequest->getContent(),true);
         $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $intIdUsuario         = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:'';
         $objResponse          = new Response;
         $strDatetimeActual    = new \DateTime('now');
         $intStatus            = 200;
@@ -325,6 +329,37 @@ class InfoPreguntaController extends AbstractController
         $strMensaje           = "";
         try
         {
+            if(!empty($intIdUsuario))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol=="ADMINISTRADOR")
+                        {
+                            $intIdEmpresa = '';
+                        }
+                        else
+                        {
+                            $objUsuarioEmp = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioEmpresa::class)
+                                                  ->findOneBy(array('USUARIO_ID'=>$intIdUsuario));
+                            $intIdEmpresa = $objUsuarioEmp->getEMPRESAID()->getId();
+                            if(!empty($intIdEmpresa))
+                            {
+                                $arrayData["intIdEmpresa"] = $intIdEmpresa;
+                            }
+                        }
+                    }
+                }
+            }
             $arrayPregunta = $this->getDoctrine()->getRepository(InfoPregunta::class)->getPregunta($arrayData);
             if(!empty($arrayPregunta["error"]))
             {

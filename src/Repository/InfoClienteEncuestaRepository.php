@@ -1099,9 +1099,9 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
                 }
             }
-            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha";
+            $strSelect      = " SELECT id,correo,sucursal,area, ".$strSelectPregunta." fecha";
             $strFrom        = " FROM ( ";
-            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
+            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ic.correo,ip.DESCRIPCION as pregunta, 
                                 ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado ";
             $strSubFrom     = " FROM INFO_ENCUESTA ie
                                 JOIN INFO_AREA ia on ia.id_area=ie.area_id
@@ -1135,6 +1135,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objQuery->setParameter("strTitulo", $strTitulo);
             
             $objRsmBuilder->addScalarResult('id', 'id', 'integer');
+            $objRsmBuilder->addScalarResult('correo', 'correo', 'string');
             $objRsmBuilder->addScalarResult('fecha', 'fecha', 'string');
             $strSql         = $strSelect.$strFrom.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);

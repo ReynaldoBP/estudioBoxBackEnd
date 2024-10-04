@@ -1137,7 +1137,8 @@ class InfoClienteEncuestaController extends AbstractController
             }
             else
             {
-                throw new \Exception("No existe sede con la sucursal registrada en la Base de Datos");
+                $intSede = 1;
+                //throw new \Exception("No existe sede con la sucursal registrada en la Base de Datos");
             }
             if(strtoupper($strPais) == "ECUADOR" && strlen($intNumeroDocumento) !=10)
             {

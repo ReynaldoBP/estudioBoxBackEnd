@@ -343,8 +343,7 @@ class InfoUsuarioController extends AbstractController
         $strMensaje           = "";
         try
         {
-            $arrayParametros = array("strEstado"    => "ACTIVO",
-                                     "intIdUsuario" => $intIdUsuario,
+            $arrayParametros = array("intIdUsuario" => $intIdUsuario,
                                      "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
             $arrayUsuarios   = $this->getDoctrine()
                                     ->getRepository(InfoUsuario::class)

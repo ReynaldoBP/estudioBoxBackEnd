@@ -119,6 +119,9 @@ class InfoEncuestaController extends AbstractController
         $strTitulo               = isset($arrayData["strTitulo"]) && !empty($arrayData["strTitulo"]) ? $arrayData["strTitulo"]:"";
         $strEstado               = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"";
         $strPermiteDatoAdicional = isset($arrayData["strPermiteDatoAdicional"]) && !empty($arrayData["strPermiteDatoAdicional"]) ? $arrayData["strPermiteDatoAdicional"]:"No";
+        $strPermiteCorreo        = isset($arrayData["strPermiteCorreo"]) && !empty($arrayData["strPermiteCorreo"]) ? $arrayData["strPermiteCorreo"]:"No";
+        $strPermiteAnio          = isset($arrayData["strPermiteAnio"]) && !empty($arrayData["strPermiteAnio"]) ? $arrayData["strPermiteAnio"]:"No";
+        $strPermiteGenero        = isset($arrayData["strPermiteGenero"]) && !empty($arrayData["strPermiteGenero"]) ? $arrayData["strPermiteGenero"]:"No";
         $strPermiteFirma         = isset($arrayData["strPermiteFirma"]) && !empty($arrayData["strPermiteFirma"]) ? $arrayData["strPermiteFirma"]:"No";
         $intIdArea               = isset($arrayData["intIdArea"]) && !empty($arrayData["intIdArea"]) ? $arrayData["intIdArea"]:"";
         $strUsrSesion            = isset($arrayData["intIdUsuario"]) && !empty($arrayData["intIdUsuario"]) ? $arrayData["intIdUsuario"]:"";
@@ -169,6 +172,18 @@ class InfoEncuestaController extends AbstractController
                                            'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_DATO_ADICIONAL(),
                                            'VALOR_ACTUAL'   => $strPermiteDatoAdicional,
                                            'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Permite Correo",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_CORREO(),
+                                           'VALOR_ACTUAL'   => $strPermiteCorreo,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Permite Año",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_ANIO(),
+                                           'VALOR_ACTUAL'   => $strPermiteAnio,
+                                           'USUARIO_ID'     => $strUsrSesion);
+            $arrayBitacoraDetalle[]= array('CAMPO'          => "Permite Genero",
+                                           'VALOR_ANTERIOR' => $objEncuesta->getPERMITE_GENERO(),
+                                           'VALOR_ACTUAL'   => $strPermiteGenero,
+                                           'USUARIO_ID'     => $strUsrSesion);
             $em->getConnection()->beginTransaction();
             $objEncuesta->setDESCRIPCION($strDescripcion);
             $objEncuesta->setAREAID($objArea);
@@ -176,6 +191,9 @@ class InfoEncuestaController extends AbstractController
             $objEncuesta->setESTADO(strtoupper($strEstado));
             $objEncuesta->setPERMITE_FIRMA($strPermiteFirma);
             $objEncuesta->setPERMITE_DATO_ADICIONAL($strPermiteDatoAdicional);
+            $objEncuesta->setPERMITE_CORREO($strPermiteCorreo);
+            $objEncuesta->setPERMITE_ANIO($strPermiteAnio);
+            $objEncuesta->setPERMITE_GENERO($strPermiteGenero);
             $objEncuesta->setUSRMODIFICACION($strUsrSesion);
             $objEncuesta->setFEMODIFICACION($strDatetimeActual);
             $em->persist($objEncuesta);

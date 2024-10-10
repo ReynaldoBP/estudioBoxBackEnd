@@ -50,10 +50,25 @@ class InfoEncuesta
      */
     private $PERMITE_FIRMA;
 
-/**
+    /**
      * @ORM\Column(type="string", length=2)
      */
     private $PERMITE_DATO_ADICIONAL;
+
+    /**
+     * @ORM\Column(type="string", length=2)
+     */
+    private $PERMITE_CORREO;
+
+    /**
+     * @ORM\Column(type="string", length=2)
+     */
+    private $PERMITE_ANIO;
+
+    /**
+     * @ORM\Column(type="string", length=2)
+     */
+    private $PERMITE_GENERO;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -186,6 +201,42 @@ class InfoEncuesta
     public function setPERMITE_DATO_ADICIONAL(string $PERMITE_DATO_ADICIONAL): self
     {
         $this->PERMITE_DATO_ADICIONAL = $PERMITE_DATO_ADICIONAL;
+
+        return $this;
+    }
+
+    public function getPERMITE_CORREO(): ?string
+    {
+        return $this->PERMITE_CORREO;
+    }
+
+    public function setPERMITE_CORREO(string $PERMITE_CORREO): self
+    {
+        $this->PERMITE_CORREO = $PERMITE_CORREO;
+
+        return $this;
+    }
+
+    public function getPERMITE_ANIO(): ?string
+    {
+        return $this->PERMITE_ANIO;
+    }
+
+    public function setPERMITE_ANIO(string $PERMITE_ANIO): self
+    {
+        $this->PERMITE_ANIO = $PERMITE_ANIO;
+
+        return $this;
+    }
+
+    public function getPERMITE_GENERO(): ?string
+    {
+        return $this->PERMITE_GENERO;
+    }
+
+    public function setPERMITE_GENERO(string $PERMITE_GENERO): self
+    {
+        $this->PERMITE_GENERO = $PERMITE_GENERO;
 
         return $this;
     }

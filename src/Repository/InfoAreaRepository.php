@@ -22,6 +22,7 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery            = $this->_em->createNativeQuery(null, $objRsmBuilder);
         $intIdEmpresa        = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $intIdSucursal       = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
+        $arrayIdSucursal     = isset($arrayParametros["arrayIdSucursal"]) && !empty($arrayParametros["arrayIdSucursal"]) ? $arrayParametros["arrayIdSucursal"]:"";
         $strMensajeError     = "";
         $strSelect           = "";
         $strFrom             = "";
@@ -43,6 +44,19 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
             ".$strSubFrom;
             $strWhere   = "  ";
             $strOrderBy = " ORDER BY IA.FE_CREACION ASC ";
+            if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
+            {
+                $strFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                               AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuario";
+                $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+            }
+            if(isset($arrayParametros["arrayUsuarioAarea"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioAarea"]))
+            {
+                $strFrom .= " JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=IA.ID_AREA
+                               AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuario ";
+                $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+            }
+
             if(isset($arrayParametros["strEstado"]) && !empty($arrayParametros["strEstado"]))
             {
                 $strWhere   = " WHERE IA.ESTADO IN (:strEstado) ";
@@ -61,6 +75,15 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere .= " AND ISU.ID_SUCURSAL in (:arrayIdSucursal) ";
                 $objQuery->setParameter("arrayIdSucursal", $arrayParametros["arrayIdSucursal"]);
+            }
+            if(isset($arrayParametros["intIdUsuarioEmpresa"]) && !empty($arrayParametros["intIdUsuarioEmpresa"]))
+            {
+                
+                $strSelect .= " ,IUA.ID_USUARIO_AREA ";
+                $strFrom  .= " LEFT JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=IA.ID_AREA
+                               AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuarioEmpresa ";
+                $objQuery->setParameter("intIdUsuarioEmpresa", $arrayParametros["intIdUsuarioEmpresa"]);
+                $objRsmBuilder->addScalarResult("ID_USUARIO_AREA", "intIdUsArea", "integer");
             }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {

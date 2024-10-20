@@ -42,6 +42,7 @@ class InfoUsuarioRepository extends \Doctrine\ORM\EntityRepository
             $strFrom        = "FROM INFO_USUARIO IU 
                                     JOIN ADMI_TIPO_ROL         ATR   ON IU.TIPO_ROL_ID     = ATR.ID_TIPO_ROL 
                                     LEFT JOIN INFO_USUARIO_EMPRESA IUE ON IUE.USUARIO_ID   = IU.ID_USUARIO
+                                    AND IUE.ESTADO='ACTIVO'
                                     LEFT JOIN INFO_EMPRESA IE   ON IE.ID_EMPRESA = IUE.EMPRESA_ID ";
             $strWhere       = "WHERE IU.ESTADO in (:strEstado) ";
             $strOrderBy     = " Order by IU.FE_CREACION ASC ";

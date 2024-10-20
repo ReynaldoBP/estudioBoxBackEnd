@@ -92,7 +92,7 @@ class InfoRespuestaController extends AbstractController
                 {
                     throw new \Exception("Estimado usuario por favor ingresar su año de Nacimiento, por ejemplo: 1995");
                 }
-                if(strlen($strEdad) < 1928)
+                if((int)$strEdad < 1928)
                 {
                     throw new \Exception("Estimado usuario el año de nacimiento no debe ser menor a: 1928");
                 }

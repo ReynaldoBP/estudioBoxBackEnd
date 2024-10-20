@@ -13,6 +13,10 @@ use FOS\RestBundle\View\View;
 use App\Entity\InfoUsuario;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoUsuarioSucursal;
+use App\Entity\InfoUsuarioArea;
+use App\Entity\InfoSucursal;
+use App\Entity\InfoArea;
 use App\Entity\InfoEmpresa;
 use App\Entity\AdmiModulo;
 use App\Entity\AdmiAccion;
@@ -30,6 +34,9 @@ class InfoUsuarioController extends AbstractController
      * @author Kevin Baque Puya
      * @version 1.0 20-02-2023
      *
+     * @author Kevin Baque Puya
+     * @version 1.1 20-10-2024 - Se Agrega Bitacora y la opción de asociar al usuario con sucursales y areas.
+     * 
      */
     public function createUsuario(Request $objRequest)
     {
@@ -42,6 +49,8 @@ class InfoUsuarioController extends AbstractController
         $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
         $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $arrayIdSucursal      = isset($arrayData["arrayIdSucursal"]) && !empty($arrayData["arrayIdSucursal"]) ? $arrayData["arrayIdSucursal"]:"";
+        $arrayIdArea          = isset($arrayData["arrayIdArea"]) && !empty($arrayData["arrayIdArea"]) ? $arrayData["arrayIdArea"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
         $strNotificacion      = isset($arrayData["strNotificacion"]) && !empty($arrayData["strNotificacion"]) ? $arrayData["strNotificacion"]:"NO";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"web";
@@ -50,6 +59,8 @@ class InfoUsuarioController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $objApiBitacora       = new InfoBitacoraController();
+        $objApiBitacora->setContainer($this->container);
         try
         {
             $objUsuario = $this->getDoctrine()->getRepository(InfoUsuario::class)->findOneBy(array("CORREO" => $strCorreo));
@@ -65,6 +76,30 @@ class InfoUsuarioController extends AbstractController
                     throw new \Exception("No se encontró el tipo de rol con los parámetros enviados.");
                 }
                 $em->getConnection()->beginTransaction();
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Identificación",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $strIdentificacion,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Nombre",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $strNombre,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Apellido",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $strApellido,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Correo",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $strCorreo,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Estado",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $strEstado,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Rol",
+                                               'VALOR_ANTERIOR' => "",
+                                               'VALOR_ACTUAL'   => $objTipoRol->getDESCRIPCIONTIPOROL(),
+                                               'USUARIO_ID'     => $strUsrSesion);
                 $entityUsuario = new InfoUsuario();
                 $entityUsuario->setIDENTIFICACION($strIdentificacion);
                 $entityUsuario->setNOMBRE($strNombre);
@@ -92,6 +127,10 @@ class InfoUsuarioController extends AbstractController
                             throw new \Exception("No se encontró la empresa con los parámetros enviados.");
                         }
                     }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Empresa",
+                                                   'VALOR_ANTERIOR' => "",
+                                                   'VALOR_ACTUAL'   => $objEmpresa->getNOMBRECOMERCIAL(),
+                                                   'USUARIO_ID'     => $strUsrSesion);
                     $entityUsuarioEmpresa = new InfoUsuarioEmpresa();
                     $entityUsuarioEmpresa->setUSUARIOID($entityUsuario);
                     $entityUsuarioEmpresa->setEMPRESAID($objEmpresa);
@@ -100,6 +139,56 @@ class InfoUsuarioController extends AbstractController
                     $entityUsuarioEmpresa->setFECREACION($objDatetimeActual);
                     $em->persist($entityUsuarioEmpresa);
                     $em->flush();
+                }
+                if(!empty($arrayIdSucursal))
+                {
+                    $strSucursalAsignada = "";
+                    foreach($arrayIdSucursal as $arrayItemSucursal)
+                    {
+                        $objSucursal = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($arrayItemSucursal);
+                        if(empty($objSucursal) || !is_object($objSucursal))
+                        {
+                            throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                        }
+                        $strSucursalAsignada = $strSucursalAsignada.$objSucursal->getNOMBRE().", ";
+                        $InfoUsuarioSucursal = new InfoUsuarioSucursal();
+                        $InfoUsuarioSucursal->setUSUARIOID($entityUsuario);
+                        $InfoUsuarioSucursal->setSUCURSALID($objSucursal);
+                        $InfoUsuarioSucursal->setESTADO(strtoupper($strEstado));
+                        $InfoUsuarioSucursal->setUSRCREACION($strUsrSesion);
+                        $InfoUsuarioSucursal->setFECREACION($objDatetimeActual);
+                        $em->persist($InfoUsuarioSucursal);
+                        $em->flush();
+                    }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Sucursales",
+                                                   'VALOR_ANTERIOR' => "",
+                                                   'VALOR_ACTUAL'   => $strSucursalAsignada,
+                                                   'USUARIO_ID'     => $strUsrSesion);
+                }
+                if(!empty($arrayIdArea))
+                {
+                    $strAreaAsignada = "";
+                    foreach($arrayIdArea as $arrayItemArea)
+                    {
+                        $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($arrayItemArea);
+                        if(empty($objArea) || !is_object($objArea))
+                        {
+                            throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                        }
+                        $strAreaAsignada = $strAreaAsignada.$objArea->getAREA().", ";
+                        $InfoUsuarioArea = new InfoUsuarioArea();
+                        $InfoUsuarioArea->setUSUARIOID($entityUsuario);
+                        $InfoUsuarioArea->setAREAID($objArea);
+                        $InfoUsuarioArea->setESTADO(strtoupper($strEstado));
+                        $InfoUsuarioArea->setUSRCREACION($strUsrSesion);
+                        $InfoUsuarioArea->setFECREACION($objDatetimeActual);
+                        $em->persist($InfoUsuarioArea);
+                        $em->flush();
+                    }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Areas",
+                                                   'VALOR_ANTERIOR' => "",
+                                                   'VALOR_ACTUAL'   => $strAreaAsignada,
+                                                   'USUARIO_ID'     => $strUsrSesion);
                 }
                 $strMensaje = "¡Usuario creado con éxito!";
                 if($em->getConnection()->isTransactionActive())
@@ -111,6 +200,15 @@ class InfoUsuarioController extends AbstractController
             else
             {
                 throw new \Exception('Usuario ya existe con el correo: '.$strCorreo);
+            }
+            if(!empty($arrayBitacoraDetalle))
+            {
+                $objApiBitacora->createBitacora(array("strAccion"            => "Creación",
+                                                      "strModulo"            => "Usuarios",
+                                                      "strUsuarioCreacion"   => $strUsrSesion,
+                                                      "intReferenciaId"      => $entityUsuario->getId(),
+                                                      "strReferenciaValor"   => $entityUsuario->getCORREO(),
+                                                      "arrayBitacoraDetalle" => $arrayBitacoraDetalle));
             }
         }
         catch(\Exception $ex)
@@ -138,6 +236,9 @@ class InfoUsuarioController extends AbstractController
      * @author Kevin Baque Puya
      * @version 1.0 08-09-2024
      *
+     * @author Kevin Baque Puya
+     * @version 1.1 20-10-2024 - Se Agrega Bitacora y la opción de asociar al usuario con sucursales y areas.
+     *
      */
     public function editUsuario(Request $objRequest)
     {
@@ -150,7 +251,9 @@ class InfoUsuarioController extends AbstractController
         $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
         $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
-        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"][0]:"";
+        $arrayIdSucursal      = isset($arrayData["arrayIdSucursal"]) && !empty($arrayData["arrayIdSucursal"]) ? $arrayData["arrayIdSucursal"]:"";
+        $arrayIdArea          = isset($arrayData["arrayIdArea"]) && !empty($arrayData["arrayIdArea"]) ? $arrayData["arrayIdArea"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
         $strNotificacion      = isset($arrayData["strNotificacion"]) && !empty($arrayData["strNotificacion"]) ? $arrayData["strNotificacion"]:"NO";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"webMovil";
@@ -159,6 +262,8 @@ class InfoUsuarioController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $objApiBitacora       = new InfoBitacoraController();
+        $objApiBitacora->setContainer($this->container);
         try
         {
             $objUsuario = $this->getDoctrine()->getRepository(InfoUsuario::class)->find($intIdUsuario);
@@ -178,6 +283,31 @@ class InfoUsuarioController extends AbstractController
                     throw new \Exception("No se encontró el tipo de rol con los parámetros enviados.");
                 }
                 $em->getConnection()->beginTransaction();
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Identificación",
+                                               'VALOR_ANTERIOR' => $objUsuario->getIDENTIFICACION(),
+                                               'VALOR_ACTUAL'   => $strIdentificacion,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Nombre",
+                                               'VALOR_ANTERIOR' => $objUsuario->getNOMBRE(),
+                                               'VALOR_ACTUAL'   => $strNombre,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Apellido",
+                                               'VALOR_ANTERIOR' => $objUsuario->getAPELLIDO(),
+                                               'VALOR_ACTUAL'   => $strApellido,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Correo",
+                                               'VALOR_ANTERIOR' => $objUsuario->getCORREO(),
+                                               'VALOR_ACTUAL'   => $strCorreo,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Estado",
+                                               'VALOR_ANTERIOR' => $objUsuario->getESTADO(),
+                                               'VALOR_ACTUAL'   => $strEstado,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Rol",
+                                               'VALOR_ANTERIOR' => $objUsuario->getTIPOROLID()->getDESCRIPCIONTIPOROL(),
+                                               'VALOR_ACTUAL'   => $objTipoRol->getDESCRIPCIONTIPOROL(),
+                                               'USUARIO_ID'     => $strUsrSesion);
+
                 $objUsuario->setIDENTIFICACION($strIdentificacion);
                 $objUsuario->setNOMBRE($strNombre);
                 $objUsuario->setAPELLIDO($strApellido);
@@ -191,11 +321,11 @@ class InfoUsuarioController extends AbstractController
                 $em->flush();
                 if($objTipoRol->getDESCRIPCIONTIPOROL()=="EMPRESA")
                 {
-                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
-                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                      'USUARIO_ID' => $objUsuario->getId());
                     $objUsuarioEmpresa = $this->getDoctrine()
                                               ->getRepository(InfoUsuarioEmpresa::class)
-                                              ->findOneBy($arrayParametrosPerfil);
+                                              ->findOneBy($arrayParametrosUsEmpresa);
                     if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
                     {
                         $em->remove($objUsuarioEmpresa);
@@ -213,6 +343,10 @@ class InfoUsuarioController extends AbstractController
                             throw new \Exception("No se encontró la empresa con los parámetros enviados.");
                         }
                     }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Empresa",
+                                                   'VALOR_ANTERIOR' => $objUsuarioEmpresa->getEMPRESAID()->getNOMBRECOMERCIAL(),
+                                                   'VALOR_ACTUAL'   => $objEmpresa->getNOMBRECOMERCIAL(),
+                                                   'USUARIO_ID'     => $strUsrSesion);
                     $entityUsuarioEmpresa = new InfoUsuarioEmpresa();
                     $entityUsuarioEmpresa->setUSUARIOID($objUsuario);
                     $entityUsuarioEmpresa->setEMPRESAID($objEmpresa);
@@ -221,14 +355,131 @@ class InfoUsuarioController extends AbstractController
                     $entityUsuarioEmpresa->setFECREACION($objDatetimeActual);
                     $em->persist($entityUsuarioEmpresa);
                     $em->flush();
+                    if(!empty($arrayIdSucursal))
+                    {
+                        $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                           'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                          ->findBy($arrayParametrosUsSucursal);
+                        $strSucursalAntiguaAsignada = "";
+                        if(is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal))
+                        {
+                            foreach($arrayUsuarioSucursal as $arrayItem)
+                            {
+                                $strSucursalAntiguaAsignada = $arrayItem->getSUCURSALID()->getNOMBRE().", ";
+                                $em->remove($arrayItem->getId());
+                                $em->flush();
+                            }
+                        }
+                        $strSucursalAsignada = "";
+                        foreach($arrayIdSucursal as $arrayItemSucursal)
+                        {
+                            $objSucursal = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($arrayItemSucursal);
+                            if(empty($objSucursal) || !is_object($objSucursal))
+                            {
+                                throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                            }
+                            $strSucursalAsignada = $strSucursalAsignada.$objSucursal->getNOMBRE().", ";
+                            $InfoUsuarioSucursal = new InfoUsuarioSucursal();
+                            $InfoUsuarioSucursal->setUSUARIOID($objUsuario);
+                            $InfoUsuarioSucursal->setSUCURSALID($objSucursal);
+                            $InfoUsuarioSucursal->setESTADO(strtoupper($strEstado));
+                            $InfoUsuarioSucursal->setUSRCREACION($strUsrSesion);
+                            $InfoUsuarioSucursal->setFECREACION($objDatetimeActual);
+                            $em->persist($InfoUsuarioSucursal);
+                            $em->flush();
+                        }
+                        $arrayBitacoraDetalle[]= array('CAMPO'          => "Sucursales",
+                                                       'VALOR_ANTERIOR' => $strSucursalAntiguaAsignada,
+                                                       'VALOR_ACTUAL'   => $strSucursalAsignada,
+                                                       'USUARIO_ID'     => $strUsrSesion);
+                    }
+                    else
+                    {
+                        error_log("ingresando sucu");
+                        $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                           'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                          ->findBy($arrayParametrosUsSucursal);
+                        $strSucursalAntiguaAsignada = "";
+                        if(is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal))
+                        {
+                            error_log("if");
+                            foreach($arrayUsuarioSucursal as $arrayItem)
+                            {
+                                $strSucursalAntiguaAsignada = $arrayItem->getSUCURSALID()->getNOMBRE().", ";
+                                error_log($strSucursalAntiguaAsignada);
+                                $em->remove($arrayItem);
+                                $em->flush();
+                            }
+                        }
+                    }
+                    if(!empty($arrayIdArea))
+                    {
+                        $arrayParametrosUsArea = array('ESTADO'     => 'ACTIVO',
+                                                       'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioAarea = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                        $strAreaAntiguaAsignada = "";
+                        if(is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea))
+                        {
+                            foreach($arrayUsuarioAarea as $arrayItem)
+                            {
+                                $strAreaAntiguaAsignada = $arrayItem->getAREAID()->getAREA().", ";
+                                $em->remove($arrayItem);
+                                $em->flush();
+                            }
+                        }
+                        $strAreaAsignada = "";
+                        foreach($arrayIdArea as $arrayItemArea)
+                        {
+                            $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($arrayItemArea);
+                            if(empty($objArea) || !is_object($objArea))
+                            {
+                                throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                            }
+                            $strAreaAsignada = $strAreaAsignada.$objArea->getAREA().", ";
+                            $InfoUsuarioArea = new InfoUsuarioArea();
+                            $InfoUsuarioArea->setUSUARIOID($objUsuario);
+                            $InfoUsuarioArea->setAREAID($objArea);
+                            $InfoUsuarioArea->setESTADO(strtoupper($strEstado));
+                            $InfoUsuarioArea->setUSRCREACION($strUsrSesion);
+                            $InfoUsuarioArea->setFECREACION($objDatetimeActual);
+                            $em->persist($InfoUsuarioArea);
+                            $em->flush();
+                        }
+                        $arrayBitacoraDetalle[]= array('CAMPO'          => "Areas",
+                                                       'VALOR_ANTERIOR' => $strAreaAntiguaAsignada,
+                                                       'VALOR_ACTUAL'   => $strAreaAsignada,
+                                                       'USUARIO_ID'     => $strUsrSesion);
+                    }
+                    else
+                    {
+                        $arrayParametrosUsArea = array('ESTADO'     => 'ACTIVO',
+                                                       'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioAarea = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                        $strAreaAntiguaAsignada = "";
+                        if(is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea))
+                        {
+                            foreach($arrayUsuarioAarea as $arrayItem)
+                            {
+                                $strAreaAntiguaAsignada = $arrayItem->getAREAID()->getAREA().", ";
+                                $em->remove($arrayItem);
+                                $em->flush();
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
-                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                      'USUARIO_ID' => $objUsuario->getId());
                     $objUsuarioEmpresa = $this->getDoctrine()
                                               ->getRepository(InfoUsuarioEmpresa::class)
-                                              ->findOneBy($arrayParametrosPerfil);
+                                              ->findOneBy($arrayParametrosUsEmpresa);
                     if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
                     {
                         $em->remove($objUsuarioEmpresa);
@@ -241,6 +492,15 @@ class InfoUsuarioController extends AbstractController
                     $em->getConnection()->commit();
                     $em->getConnection()->close();
                 }
+            }
+            if(!empty($arrayBitacoraDetalle))
+            {
+                $objApiBitacora->createBitacora(array("strAccion"            => "Edición",
+                                                    "strModulo"            => "Usuarios",
+                                                    "strUsuarioCreacion"   => $strUsrSesion,
+                                                    "intReferenciaId"      => $objUsuario->getId(),
+                                                    "strReferenciaValor"   => $objUsuario->getCORREO(),
+                                                    "arrayBitacoraDetalle" => $arrayBitacoraDetalle));
             }
         }
         catch(\Exception $ex)
@@ -343,8 +603,35 @@ class InfoUsuarioController extends AbstractController
         $strMensaje           = "";
         try
         {
-            $arrayParametros = array("intIdUsuario" => $intIdUsuario,
-                                     "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
+            if(!empty($intIdUsuario))
+            {
+                $arrayParametros = array("intIdUsuario" => $intIdUsuario);
+            }
+            if(!empty($intIdEmpresaPorUsuario))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdEmpresaPorUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol !== "ADMINISTRADOR")
+                        {
+                            $arrayParametros = array("intIdUsuario" => $intIdUsuario,
+                                                     "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
+                        }
+                        else
+                        {
+                            $arrayParametros = array();
+                        }
+                    }
+                }
+            }
             $arrayUsuarios   = $this->getDoctrine()
                                     ->getRepository(InfoUsuario::class)
                                     ->getUsuariosCriterio($arrayParametros);

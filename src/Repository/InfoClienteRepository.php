@@ -93,6 +93,10 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque Puya
      * @version 1.0 27-02-2023
      * 
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
+     * 
      * @return array  $arrayResultado
      * 
      */
@@ -118,6 +122,18 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
                 $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+                if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
+                {
+                    $strSubFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                                   AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuario";
+                    $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+                }
+                if(isset($arrayParametros["arrayUsuarioAarea"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioAarea"]))
+                {
+                    $strSubFrom .= " JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=AR.ID_AREA
+                                   AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuario ";
+                    $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+                }
             }
             $strSelect  = " SELECT COUNT(*) AS CANTIDAD ";
             $strFrom    = " FROM INFO_CLIENTE IC ".$strSubFrom;
@@ -144,6 +160,10 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque Puya
      * @version 1.0 27-02-2023
      * 
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
+     * 
      * @return array  $arrayCltEncuesta
      * 
      */
@@ -166,6 +186,18 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID
                                   JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
                 $strSubWhere  = " AND ISU.EMPRESA_ID = ".$intIdEmpresa." ";
+                if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
+                {
+                    $strSubSelect .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                                   AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuario";
+                    $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+                }
+                if(isset($arrayParametros["arrayUsuarioAarea"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioAarea"]))
+                {
+                    $strSubSelect .= " JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=AR.ID_AREA
+                                   AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuario ";
+                    $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
+                }
             }
             $strSelect      = "SELECT (SELECT CONCAT(VALOR1,' (',YEAR(NOW())-VALOR3, ' A ',YEAR(NOW())-VALOR2,' AÑOS)')
                                         FROM ADMI_PARAMETRO

@@ -13,6 +13,10 @@ class InfoSucursalRepository extends \Doctrine\ORM\EntityRepository
      * @author Kevin Baque Puya
      * @version 1.0 03-03-2023
      * 
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
+     * 
      * @return array  $arrayResultado
      * 
      */
@@ -53,6 +57,20 @@ class InfoSucursalRepository extends \Doctrine\ORM\EntityRepository
             {
                 $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $arrayParametros["intIdSucursal"]);
+            }
+            if(isset($arrayParametros["intIdUsuarioEmpresa"]) && !empty($arrayParametros["intIdUsuarioEmpresa"]))
+            {
+                $strSelect .= " ,IUS.ID_USUARIO_SUCURSAL ";
+                $strFrom  .= " LEFT JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                               AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuarioEmpresa";
+                $objQuery->setParameter("intIdUsuarioEmpresa", $arrayParametros["intIdUsuarioEmpresa"]);
+                $objRsmBuilder->addScalarResult("ID_USUARIO_SUCURSAL", "intIdUsSucursal", "integer");
+            }
+            if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
+            {
+                $strFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                               AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuario";
+                $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
             }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {

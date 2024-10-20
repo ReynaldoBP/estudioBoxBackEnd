@@ -13,6 +13,8 @@ use App\Entity\InfoCliente;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoUsuario;
+use App\Entity\InfoUsuarioSucursal;
+use App\Entity\InfoUsuarioArea;
 class InfoClienteController extends AbstractController
 {
     /**
@@ -206,6 +208,10 @@ class InfoClienteController extends AbstractController
      * @author Kevin Baque Puya
      * @version 1.0 27-02-2023
      *
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
+     *
      */
     public function getClienteCriterioWeb(Request $objRequest)
     {
@@ -222,6 +228,21 @@ class InfoClienteController extends AbstractController
         $strMensaje           = "";
         try
         {
+            if(!empty($intIdUsuario))
+            {
+                //Bloque que identifica si el usuario tiene permitido ciertas sucursales y areas
+                $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                  ->findBy($arrayParametrosUsSucursal);
+                $arrayParametrosUsArea     = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioAarea         = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                $arrayData["arrayUsuarioSucursal"] = is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal) ? $arrayUsuarioSucursal:"";
+                $arrayData["arrayUsuarioAarea"]    = is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea) ? $arrayUsuarioAarea:"";
+            }
             if(empty($intIdEmpresa))
             {
                 $objUsuario = $this->getDoctrine()

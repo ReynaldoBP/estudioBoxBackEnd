@@ -20,6 +20,8 @@ use App\Entity\InfoEncuesta;
 use App\Entity\InfoArea;
 use App\Entity\InfoSucursal;
 use App\Entity\InfoAceptacionTratamiento;
+use App\Entity\InfoUsuarioSucursal;
+use App\Entity\InfoUsuarioArea;
 class InfoClienteEncuestaController extends AbstractController
 {
 
@@ -32,6 +34,10 @@ class InfoClienteEncuestaController extends AbstractController
      *
      * @author Kevin Baque Puya
      * @version 1.0 26-02-2023
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
      *
      */
     public function getPromedioClteGenero(Request $objRequest)
@@ -47,6 +53,23 @@ class InfoClienteEncuestaController extends AbstractController
         $strMensaje           = "";
         try
         {
+            if(!empty($intIdUsuario))
+            {
+                //Bloque que identifica si el usuario tiene permitido ciertas sucursales y areas
+                $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                  ->findBy($arrayParametrosUsSucursal);
+                $arrayParametrosUsArea     = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioAarea         = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                                                  
+                $arrayParametros["intIdUsuario"]         = !empty($intIdUsuario) ? $intIdUsuario:"";
+                $arrayParametros["arrayUsuarioSucursal"] = is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal) ? $arrayUsuarioSucursal:"";
+                $arrayParametros["arrayUsuarioAarea"]    = is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea) ? $arrayUsuarioAarea:"";
+            }
             if(empty($intIdEmpresa))
             {
                 $objUsuario = $this->getDoctrine()
@@ -112,6 +135,10 @@ class InfoClienteEncuestaController extends AbstractController
      * @author Kevin Baque Puya
      * @version 1.0 26-02-2023
      *
+     * @author Kevin Baque Puya
+     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     *                           ver sus sucursales y areas asignadas
+     *
      */
     public function getTotalEncuesta(Request $objRequest)
     {
@@ -129,6 +156,23 @@ class InfoClienteEncuestaController extends AbstractController
         $strMensaje           = "";
         try
         {
+            if(!empty($intIdUsuario))
+            {
+                //Bloque que identifica si el usuario tiene permitido ciertas sucursales y areas
+                $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                  ->findBy($arrayParametrosUsSucursal);
+                $arrayParametrosUsArea     = array('ESTADO'     => 'ACTIVO',
+                                                   'USUARIO_ID' => $intIdUsuario);
+                $arrayUsuarioAarea         = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                                                  
+                $arrayParametros["intIdUsuario"]         = !empty($intIdUsuario) ? $intIdUsuario:"";
+                $arrayParametros["arrayUsuarioSucursal"] = is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal) ? $arrayUsuarioSucursal:"";
+                $arrayParametros["arrayUsuarioAarea"]    = is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea) ? $arrayUsuarioAarea:"";
+            }
             if(empty($intIdEmpresa))
             {
                 $objUsuario = $this->getDoctrine()

@@ -13,6 +13,10 @@ use FOS\RestBundle\View\View;
 use App\Entity\InfoUsuario;
 use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
+use App\Entity\InfoUsuarioSucursal;
+use App\Entity\InfoUsuarioArea;
+use App\Entity\InfoSucursal;
+use App\Entity\InfoArea;
 use App\Entity\InfoEmpresa;
 use App\Entity\AdmiModulo;
 use App\Entity\AdmiAccion;
@@ -150,7 +154,9 @@ class InfoUsuarioController extends AbstractController
         $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
         $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
-        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"][0]:"";
+        $arrayIdSucursal      = isset($arrayData["arrayIdSucursal"]) && !empty($arrayData["arrayIdSucursal"]) ? $arrayData["arrayIdSucursal"]:"";
+        $arrayIdArea          = isset($arrayData["arrayIdArea"]) && !empty($arrayData["arrayIdArea"]) ? $arrayData["arrayIdArea"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
         $strNotificacion      = isset($arrayData["strNotificacion"]) && !empty($arrayData["strNotificacion"]) ? $arrayData["strNotificacion"]:"NO";
         $strUsrSesion         = isset($arrayData["strUsrSesion"]) && !empty($arrayData["strUsrSesion"]) ? $arrayData["strUsrSesion"]:"webMovil";
@@ -191,11 +197,11 @@ class InfoUsuarioController extends AbstractController
                 $em->flush();
                 if($objTipoRol->getDESCRIPCIONTIPOROL()=="EMPRESA")
                 {
-                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
-                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                      'USUARIO_ID' => $objUsuario->getId());
                     $objUsuarioEmpresa = $this->getDoctrine()
                                               ->getRepository(InfoUsuarioEmpresa::class)
-                                              ->findOneBy($arrayParametrosPerfil);
+                                              ->findOneBy($arrayParametrosUsEmpresa);
                     if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
                     {
                         $em->remove($objUsuarioEmpresa);
@@ -221,14 +227,83 @@ class InfoUsuarioController extends AbstractController
                     $entityUsuarioEmpresa->setFECREACION($objDatetimeActual);
                     $em->persist($entityUsuarioEmpresa);
                     $em->flush();
+                    if(!empty($arrayIdSucursal))
+                    {
+                        error_log("Logica sucursal");
+                        error_log(print_r($arrayIdSucursal));
+                        $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                           'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
+                                                          ->findBy($arrayParametrosUsSucursal);
+                        if(is_array($arrayUsuarioSucursal) && !empty($arrayUsuarioSucursal))
+                        {
+                            foreach($arrayUsuarioSucursal as $arrayItem)
+                            {
+                                $em->remove($arrayItem);
+                                $em->flush();
+                            }
+                        }
+                        foreach($arrayIdSucursal as $arrayItemSucursal)
+                        {
+                            error_log("Recorriendo sucursal");
+                            error_log($arrayItemSucursal);
+                            $objSucursal = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($arrayItemSucursal);
+                            if(empty($objSucursal) || !is_object($objSucursal))
+                            {
+                                throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                            }
+                            $InfoUsuarioSucursal = new InfoUsuarioSucursal();
+                            $InfoUsuarioSucursal->setUSUARIOID($objUsuario);
+                            $InfoUsuarioSucursal->setSUCURSALID($objSucursal);
+                            $InfoUsuarioSucursal->setESTADO(strtoupper($strEstado));
+                            $InfoUsuarioSucursal->setUSRCREACION($strUsrSesion);
+                            $InfoUsuarioSucursal->setFECREACION($objDatetimeActual);
+                            $em->persist($InfoUsuarioSucursal);
+                            $em->flush();
+                        }
+                    }
+                    if(!empty($arrayIdArea))
+                    {
+                        error_log("Logica area");
+                        $arrayParametrosUsArea = array('ESTADO'     => 'ACTIVO',
+                                                       'USUARIO_ID' => $objUsuario->getId());
+                        $arrayUsuarioAarea = $this->getDoctrine()
+                                                  ->getRepository(InfoUsuarioArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                        if(is_array($arrayUsuarioAarea) && !empty($arrayUsuarioAarea))
+                        {
+                            foreach($arrayUsuarioAarea as $arrayItem)
+                            {
+                                error_log($arrayItem->getId());
+                                $em->remove($arrayItem);
+                                $em->flush();
+                            }
+                        }
+                        foreach($arrayIdArea as $arrayItemArea)
+                        {
+                            $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($arrayItemArea);
+                            if(empty($objArea) || !is_object($objArea))
+                            {
+                                throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                            }
+                            $InfoUsuarioArea = new InfoUsuarioArea();
+                            $InfoUsuarioArea->setUSUARIOID($objUsuario);
+                            $InfoUsuarioArea->setAREAID($objArea);
+                            $InfoUsuarioArea->setESTADO(strtoupper($strEstado));
+                            $InfoUsuarioArea->setUSRCREACION($strUsrSesion);
+                            $InfoUsuarioArea->setFECREACION($objDatetimeActual);
+                            $em->persist($InfoUsuarioArea);
+                            $em->flush();
+                        }
+                    }
                 }
                 else
                 {
-                    $arrayParametrosPerfil = array('ESTADO'     => 'ACTIVO',
-                                                   'USUARIO_ID' => $objUsuario->getId());
+                    $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                      'USUARIO_ID' => $objUsuario->getId());
                     $objUsuarioEmpresa = $this->getDoctrine()
                                               ->getRepository(InfoUsuarioEmpresa::class)
-                                              ->findOneBy($arrayParametrosPerfil);
+                                              ->findOneBy($arrayParametrosUsEmpresa);
                     if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
                     {
                         $em->remove($objUsuarioEmpresa);
@@ -343,8 +418,35 @@ class InfoUsuarioController extends AbstractController
         $strMensaje           = "";
         try
         {
-            $arrayParametros = array("intIdUsuario" => $intIdUsuario,
-                                     "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
+            if(!empty($intIdUsuario))
+            {
+                $arrayParametros = array("intIdUsuario" => $intIdUsuario);
+            }
+            if(!empty($intIdEmpresaPorUsuario))
+            {
+                $objUsuario = $this->getDoctrine()
+                                   ->getRepository(InfoUsuario::class)
+                                   ->find($intIdEmpresaPorUsuario);
+                if(!empty($objUsuario) && is_object($objUsuario))
+                {
+                    $objTipoRol = $this->getDoctrine()
+                                       ->getRepository(AdmiTipoRol::class)
+                                       ->find($objUsuario->getTIPOROLID()->getId());
+                    if(!empty($objTipoRol) && is_object($objTipoRol))
+                    {
+                        $strTipoRol = !empty($objTipoRol->getDESCRIPCIONTIPOROL()) ? $objTipoRol->getDESCRIPCIONTIPOROL():'';
+                        if(!empty($strTipoRol) && $strTipoRol !== "ADMINISTRADOR")
+                        {
+                            $arrayParametros = array("intIdUsuario" => $intIdUsuario,
+                                                     "intIdEmpresaPorUsuario" => $intIdEmpresaPorUsuario);
+                        }
+                        else
+                        {
+                            $arrayParametros = array();
+                        }
+                    }
+                }
+            }
             $arrayUsuarios   = $this->getDoctrine()
                                     ->getRepository(InfoUsuario::class)
                                     ->getUsuariosCriterio($arrayParametros);

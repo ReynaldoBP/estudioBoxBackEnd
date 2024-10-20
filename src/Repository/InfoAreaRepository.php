@@ -22,12 +22,14 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery            = $this->_em->createNativeQuery(null, $objRsmBuilder);
         $intIdEmpresa        = isset($arrayParametros["intIdEmpresa"]) && !empty($arrayParametros["intIdEmpresa"]) ? $arrayParametros["intIdEmpresa"]:"";
         $intIdSucursal       = isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]) ? $arrayParametros["intIdSucursal"]:"";
+        $arrayIdSucursal     = isset($arrayParametros["arrayIdSucursal"]) && !empty($arrayParametros["arrayIdSucursal"]) ? $arrayParametros["arrayIdSucursal"]:"";
         $strMensajeError     = "";
         $strSelect           = "";
         $strFrom             = "";
         $strWhere            = "";
         $strGroupBy          = "";
         $strOrderBy          = "";
+        error_log(print_r($arrayParametros,true));
         try
         {
             $strSubFrom = "";
@@ -62,6 +64,12 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND ISU.ID_SUCURSAL in (:arrayIdSucursal) ";
                 $objQuery->setParameter("arrayIdSucursal", $arrayParametros["arrayIdSucursal"]);
             }
+            if(isset($arrayParametros["intIdUsuarioEmpresa"]) && !empty($arrayParametros["intIdUsuarioEmpresa"]))
+            {
+                $strFrom  .= " LEFT JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=IA.ID_AREA
+                               AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuarioEmpresa ";
+                $objQuery->setParameter("intIdUsuarioEmpresa", $arrayParametros["intIdUsuarioEmpresa"]);
+            }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {
                 $strSelect  = " SELECT COUNT(*) AS CANTIDAD ";
@@ -85,6 +93,7 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
                 $objRsmBuilder->addScalarResult("AGRUPADO", "intAgrupado", "integer");
             }
             $strSql  = $strSelect.$strFrom.$strWhere.$strSubWhere.$strGroupBy.$strOrderBy;
+            error_log($strSql);
             $objQuery->setSQL($strSql);
             $arrayResultado["resultados"] = $objQuery->getResult();
         }

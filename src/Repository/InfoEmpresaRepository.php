@@ -52,7 +52,8 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
             }
             if(isset($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["intIdUsuario"]))
             {
-                $strFrom  .= " JOIN INFO_USUARIO_EMPRESA IUE ON IUE.EMPRESA_ID=IE.ID_EMPRESA ";
+                $strFrom  .= " JOIN INFO_USUARIO_EMPRESA IUE ON IUE.EMPRESA_ID=IE.ID_EMPRESA 
+                               AND IUE.ESTADO='ACTIVO' ";
                 $strWhere .= " AND IUE.USUARIO_ID = :intIdUsuario ";
                 $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
             }

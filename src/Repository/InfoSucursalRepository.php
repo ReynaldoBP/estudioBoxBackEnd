@@ -54,6 +54,12 @@ class InfoSucursalRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND ISU.ID_SUCURSAL = :intIdSucursal ";
                 $objQuery->setParameter("intIdSucursal", $arrayParametros["intIdSucursal"]);
             }
+            if(isset($arrayParametros["intIdUsuarioEmpresa"]) && !empty($arrayParametros["intIdUsuarioEmpresa"]))
+            {
+                $strFrom  .= " LEFT JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                               AND IUS.ESTADO='ACTIVO' AND IUS.USUARIO_ID = :intIdUsuarioEmpresa";
+                $objQuery->setParameter("intIdUsuarioEmpresa", $arrayParametros["intIdUsuarioEmpresa"]);
+            }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")
             {
                 $strSelect  = " SELECT COUNT(*) AS CANTIDAD ";

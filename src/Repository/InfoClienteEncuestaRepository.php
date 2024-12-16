@@ -323,8 +323,10 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
      * @version 1.0 05-03-2024
      * 
      * @author Kevin Baque Puya
-     * @version 1.0 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
+     * @version 1.1 20-10-2024 - Se restringe la información en caso de que el usuario en sesión tenga solo permitido 
      *                           ver sus sucursales y areas asignadas
+     *
+     * @version 1.2 15-12-2024 - Se agrega nuevos calculos de comparativa entre area en la empresa Kennedy.
      * 
      * @return array  $arrayResultado
      * 
@@ -343,7 +345,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
         try
         {
-            $strSubFrom = "";
+            $strSubSelect = "";
+            $strSubFrom   = "";
             $strSubWhere  = "";
             if(!empty($intIdEmpresa) && empty($intIdSucursal))
             {
@@ -356,6 +359,22 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strSubFrom   = " JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
                 $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
+            if($intIdEmpresa == 11)// Empresa Kennedy
+                {
+                    $strSubSelect =" ,IFNULL(IAC.VALOR1, 0) AS COMPARATIVA
+                                     ,(IFNULL(IAC.VALOR1, 0)-IFNULL(COUNT(*), 0)) AS DIFERENCIA, -- Diferencia entre cantidad y comparativa
+                                        ROUND(
+                                            CASE 
+                                                WHEN IAC.VALOR1 IS NULL OR IAC.VALOR1 = 0 THEN 0
+                                                ELSE (IFNULL(COUNT(*), 0) / IAC.VALOR1) * 100
+                                            END, 2
+                                        ) AS PORCENTAJE ";
+                    $strSubFrom .="  LEFT JOIN 
+                                        INFO_AREA_CARACT IAC 
+                                        ON AR.ID_AREA = IAC.AREA_ID 
+                                        AND IAC.VALOR2 = :intMes
+                                        AND IAC.VALOR3 = :intAnio ";
+                }
             if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
             {
                 $strSubFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
@@ -363,7 +382,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
             }
             
-            $strSelect      = "SELECT AR.ID_AREA, AR.AREA,IFNULL(COUNT(*),0) AS CANTIDAD ";
+            $strSelect      = "SELECT AR.ID_AREA, AR.AREA,IFNULL(COUNT(*),0) AS CANTIDAD ".$strSubSelect;
             $strFrom        = " FROM INFO_CLIENTE_ENCUESTA ICE
                                      INNER JOIN INFO_ENCUESTA IE ON ICE.ENCUESTA_ID = IE.ID_ENCUESTA
                                      JOIN INFO_AREA AR ON AR.ID_AREA=IE.AREA_ID ".$strSubFrom;
@@ -384,6 +403,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('ID_AREA', 'intArea', 'integer');
             $objRsmBuilder->addScalarResult('AREA', 'strArea', 'string');
             $objRsmBuilder->addScalarResult('CANTIDAD', 'intCantidad', 'integer');
+            $objRsmBuilder->addScalarResult('COMPARATIVA', 'intComparativa', 'integer');
+            $objRsmBuilder->addScalarResult('PORCENTAJE', 'intPorcentaje', 'integer');
             $strSql       = $strSelect.$strFrom.$strWhere.$strGroup.$strOrder;
             $objQuery->setSQL($strSql);
             $arrayResultado['resultados'] = $objQuery->getResult();

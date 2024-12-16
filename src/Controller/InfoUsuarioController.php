@@ -251,7 +251,7 @@ class InfoUsuarioController extends AbstractController
         $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
         $strContrasenia       = isset($arrayData["strContrasenia"]) && !empty($arrayData["strContrasenia"]) ? $arrayData["strContrasenia"]:"";
         $intIdTipoRol         = isset($arrayData["intIdTipoRol"]) && !empty($arrayData["intIdTipoRol"]) ? $arrayData["intIdTipoRol"]:"";
-        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"][0]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
         $arrayIdSucursal      = isset($arrayData["arrayIdSucursal"]) && !empty($arrayData["arrayIdSucursal"]) ? $arrayData["arrayIdSucursal"]:"";
         $arrayIdArea          = isset($arrayData["arrayIdArea"]) && !empty($arrayData["arrayIdArea"]) ? $arrayData["arrayIdArea"]:"";
         $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
@@ -321,6 +321,7 @@ class InfoUsuarioController extends AbstractController
                 $em->flush();
                 if($objTipoRol->getDESCRIPCIONTIPOROL()=="EMPRESA")
                 {
+                    $strValorAntUsEmpresa = "";
                     $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
                                                       'USUARIO_ID' => $objUsuario->getId());
                     $objUsuarioEmpresa = $this->getDoctrine()
@@ -328,6 +329,7 @@ class InfoUsuarioController extends AbstractController
                                               ->findOneBy($arrayParametrosUsEmpresa);
                     if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
                     {
+                        $strValorAntUsEmpresa = $objUsuarioEmpresa->getEMPRESAID()->getNOMBRECOMERCIAL();
                         $em->remove($objUsuarioEmpresa);
                         $em->flush();
                     }
@@ -344,7 +346,7 @@ class InfoUsuarioController extends AbstractController
                         }
                     }
                     $arrayBitacoraDetalle[]= array('CAMPO'          => "Empresa",
-                                                   'VALOR_ANTERIOR' => $objUsuarioEmpresa->getEMPRESAID()->getNOMBRECOMERCIAL(),
+                                                   'VALOR_ANTERIOR' => $strValorAntUsEmpresa,
                                                    'VALOR_ACTUAL'   => $objEmpresa->getNOMBRECOMERCIAL(),
                                                    'USUARIO_ID'     => $strUsrSesion);
                     $entityUsuarioEmpresa = new InfoUsuarioEmpresa();
@@ -367,7 +369,7 @@ class InfoUsuarioController extends AbstractController
                             foreach($arrayUsuarioSucursal as $arrayItem)
                             {
                                 $strSucursalAntiguaAsignada = $arrayItem->getSUCURSALID()->getNOMBRE().", ";
-                                $em->remove($arrayItem->getId());
+                                $em->remove($arrayItem);
                                 $em->flush();
                             }
                         }
@@ -396,7 +398,6 @@ class InfoUsuarioController extends AbstractController
                     }
                     else
                     {
-                        error_log("ingresando sucu");
                         $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
                                                            'USUARIO_ID' => $objUsuario->getId());
                         $arrayUsuarioSucursal      = $this->getDoctrine()->getRepository(InfoUsuarioSucursal::class)
@@ -554,12 +555,26 @@ class InfoUsuarioController extends AbstractController
             }
             else
             {
+                $intIdUsuarioEmpresa = 0;
+                $strUsuarioEmpresa   = "";
+                $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                  'USUARIO_ID' => $objUsuario->getId());
+                $objUsuarioEmpresa = $this->getDoctrine()
+                                          ->getRepository(InfoUsuarioEmpresa::class)
+                                          ->findOneBy($arrayParametrosUsEmpresa);
+                if(is_object($objUsuarioEmpresa) && !empty($objUsuarioEmpresa))
+                {
+                    $intIdUsuarioEmpresa = $objUsuarioEmpresa->getEMPRESAID()->getId();
+                    $strUsuarioEmpresa   = $objUsuarioEmpresa->getEMPRESAID()->getNOMBRECOMERCIAL();
+                }
                 $arrayUsuario = array("intIdUsuario"      => $objUsuario->getId(),
                                       "strNombre"         => $objUsuario->getNOMBRE(),
                                       "strApellido"       => $objUsuario->getAPELLIDO(),
                                       "strNombreCompleto" => $objUsuario->getNOMBRE()." ".$objUsuario->getAPELLIDO(),
                                       "strTipoRol"        => $objUsuario->getTIPOROLID()->getDESCRIPCIONTIPOROL(),
                                       "strCorreo"         => $objUsuario->getCORREO(),
+                                      "intIdUsuarioEmpresa" => $intIdUsuarioEmpresa,
+                                      "strUsuarioEmpresa"   => $strUsuarioEmpresa,
                                       "strEstado"         => $objUsuario->getESTADO(),
                                       "strUsrCreacion"    => $objUsuario->getUSRCREACION(),
                                       "strFeCreacion"     => $objUsuario->getFECREACION());

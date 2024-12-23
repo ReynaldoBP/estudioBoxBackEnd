@@ -1191,6 +1191,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         {
             $objRsmBuilder->addScalarResult('sucursal', 'sucursal', 'string');
             $objRsmBuilder->addScalarResult('area', 'area', 'string');
+            $objRsmBuilder->addScalarResult('idArea', 'idArea', 'string');
             foreach($arrayPregunta as $arrayItemPregunta)
             {
                 if($arrayItemPregunta["strEstado"] == "ACTIVO")
@@ -1199,10 +1200,10 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
                 }
             }
-            $strSelect      = " SELECT id,correo,sucursal,area, ".$strSelectPregunta." fecha";
+            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha, idArea";
             $strFrom        = " FROM ( ";
-            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ic.correo,ip.DESCRIPCION as pregunta, 
-                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado ";
+            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
+                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado, ia.id_area as idArea ";
             $strSubFrom     = " FROM INFO_ENCUESTA ie
                                 JOIN INFO_AREA ia on ia.id_area=ie.area_id
                                 JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id

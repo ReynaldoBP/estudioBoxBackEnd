@@ -124,4 +124,96 @@ class InfoReporteRepository extends ServiceEntityRepository
         $arrayPublicidad['error'] = $strMensajeError;
         return $arrayPublicidad;
     }
+
+    /**
+     * Documentación para la función 'getDatosEncuestaByArea'
+     * Método encargado de retornar todos los datos ingresados para el calculo de reportes.
+     * 
+     * @author David Leon
+     * @version 1.0 17-12-2024
+     * 
+     * @return array  $arrayReportes
+     * 
+     */    
+    public function getDatosEncuestaByArea($arrayParametros)
+    {
+        $intAreaId       = $arrayParametros['intAreaId'] ? $arrayParametros['intAreaId']:'';
+        $intMes          = $arrayParametros['intMes'] ? $arrayParametros['intMes']:'';
+        $intAnio         = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
+
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+
+        try
+        {
+            $strSelect      = "SELECT ac.DESCRIPCION, iac.VALOR1, iar.AREA ";
+            $strFrom        = "FROM INFO_AREA_CARACT iac, ADMI_CARACTERISTICA ac, INFO_AREA iar ";
+            $strWhere       = "WHERE ac.ID_CARACTERISTICA = iac.CARACTERISTICA_ID and iac.VALOR2=:Mes  and iac.VALOR3=:Anio and iac.AREA_ID=:AreaId and iar.ID_AREA=iac.AREA_ID";
+            
+            $objQuery->setParameter("AreaId", $intAreaId);
+            $objQuery->setParameter("Mes", $intMes);
+            $objQuery->setParameter("Anio", $intAnio);
+
+            $objRsmBuilder->addScalarResult('DESCRIPCION', 'DESCRIPCION', 'string');
+            $objRsmBuilder->addScalarResult('VALOR1', 'VALOR1', 'string');
+            $objRsmBuilder->addScalarResult('AREA', 'AREA', 'string');
+            
+            $strSql       = $strSelect.$strFrom.$strWhere;error_log($strSql);
+            $objQuery->setSQL($strSql);
+            $arrayPublicidad['resultados'] = $objQuery->getResult();
+            
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayPublicidad['error'] = $strMensajeError;
+        return $arrayPublicidad;
+    }
+
+    /**
+     * Documentación para la función 'getDatosEncuestaDigital'
+     * Método encargado de retornar el total de encuesta digitales por area.
+     * 
+     * @author David Leon
+     * @version 1.0 17-12-2024
+     * 
+     * @return array  $arrayReportes
+     * 
+     */    
+    public function getDatosEncuestaDigital($arrayParametros)
+    {
+        $intAreaId       = $arrayParametros['intAreaId'] ? $arrayParametros['intAreaId']:'';
+        $intMes          = $arrayParametros['intMes'] ? $arrayParametros['intMes']:'';
+        $intAnio         = $arrayParametros['intAnio'] ? $arrayParametros['intAnio']:'';
+
+        $strMensajeError    = '';
+        $objRsmBuilder      = new ResultSetMappingBuilder($this->_em);
+        $objQuery           = $this->_em->createNativeQuery(null, $objRsmBuilder);
+
+        try
+        {
+            $strSelect      = "SELECT count(1) AS ENCUESTADIGITAL ";
+            $strFrom        = "FROM INFO_ENCUESTA ie , INFO_CLIENTE_ENCUESTA iec ";
+            $strWhere       = "WHERE ie.ID_ENCUESTA = iec.ENCUESTA_ID and MONTH(iec.FE_CREACION) =:Mes  and year(iec.FE_CREACION)=:Anio and ie.AREA_ID=:AreaId ";
+            
+            $objQuery->setParameter("AreaId", $intAreaId);
+            $objQuery->setParameter("Mes", $intMes);
+            $objQuery->setParameter("Anio", $intAnio);
+
+            $objRsmBuilder->addScalarResult('ENCUESTADIGITAL', 'ENCUESTADIGITAL', 'string');
+            
+            $strSql       = $strSelect.$strFrom.$strWhere;
+            $objQuery->setSQL($strSql);
+            $arrayPublicidad['resultados'] = $objQuery->getResult();
+            
+        }
+        catch(\Exception $ex)
+        {
+            $strMensajeError = $ex->getMessage();
+        }
+        $arrayPublicidad['error'] = $strMensajeError;
+        return $arrayPublicidad;
+    }
 }

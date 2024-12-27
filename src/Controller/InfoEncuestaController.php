@@ -16,6 +16,7 @@ use App\Entity\AdmiTipoRol;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoArea;
 use App\Controller\InfoBitacoraController;
+use App\Entity\AdmiParametro;
 class InfoEncuestaController extends AbstractController
 {
     /**
@@ -238,6 +239,9 @@ class InfoEncuestaController extends AbstractController
      *
      * @author Kevin Baque Puya
      * @version 1.0 08-12-2022
+     * 
+     * @author David León
+     * @version 1.1 23-12-2022 - Se agrega validación de si se permite cargar datos de la factura
      *
      */
     public function getEncuesta(Request $objRequest)
@@ -250,6 +254,7 @@ class InfoEncuestaController extends AbstractController
         $intStatus            = 200;
         $em                   = $this->getDoctrine()->getManager();
         $strMensaje           = "";
+        $strPermiteFact       = "NO";
         try
         {
             if(!empty($intIdUsuario))
@@ -284,7 +289,20 @@ class InfoEncuestaController extends AbstractController
                 }
             }
             $arrayEncuesta = $this->getDoctrine()->getRepository(InfoEncuesta::class)->getEncuesta($arrayData);
-            
+            if(!empty($arrayData['intIdArea']))
+            {
+                $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($arrayData['intIdArea']);
+                if(is_object($objArea))
+                {
+                    $objParametros = $this->getDoctrine()->getRepository(AdmiParametro::class)
+                    ->findOneBy(array('DESCRIPCION'=>'Facturacion_Vs_Encuesta','VALOR1'=>$objArea->getArea(), 'ESTADO'=>'ACTIVO'));
+
+                    if(is_object($objParametros))
+                    {
+                        $strPermiteFact       = "SI";
+                    }
+                }
+            }
             if(!empty($arrayEncuesta["error"]))
             {
                 throw new \Exception($arrayEncuesta["error"]);
@@ -303,6 +321,7 @@ class InfoEncuestaController extends AbstractController
                                                    "arrayEncuesta" => isset($arrayEncuesta["resultados"]) && 
                                                                       !empty($arrayEncuesta["resultados"]) ? 
                                                                        $arrayEncuesta["resultados"]:[],
+                                                   "strPermiteFact" => $strPermiteFact,
                                                    "strMensaje"    => $strMensaje)));
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;

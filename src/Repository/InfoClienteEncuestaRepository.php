@@ -359,22 +359,24 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                 $strSubFrom   = " JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID ";
                 $strSubWhere  = " AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
-            if($intIdEmpresa == 11)// Empresa Kennedy
-                {
-                    $strSubSelect =" ,IFNULL(IAC.VALOR1, 0) AS COMPARATIVA
-                                     ,(IFNULL(IAC.VALOR1, 0)-IFNULL(COUNT(*), 0)) AS DIFERENCIA, -- Diferencia entre cantidad y comparativa
-                                        ROUND(
-                                            CASE 
-                                                WHEN IAC.VALOR1 IS NULL OR IAC.VALOR1 = 0 THEN 0
-                                                ELSE (IFNULL(COUNT(*), 0) / IAC.VALOR1) * 100
-                                            END, 2
-                                        ) AS PORCENTAJE ";
-                    $strSubFrom .="  LEFT JOIN 
-                                        INFO_AREA_CARACT IAC 
-                                        ON AR.ID_AREA = IAC.AREA_ID 
-                                        AND IAC.VALOR2 = :intMes
-                                        AND IAC.VALOR3 = :intAnio ";
-                }
+            if($intIdEmpresa == 11 || $intIdEmpresa == 18 || $intIdEmpresa == 14)// Empresa Kennedy y Hospital de la ciudad
+            {
+                $strCaracteristica = ($intIdEmpresa == 11 || $intIdEmpresa == 18) ? 'NUMERO_PACIENTE' : 'FACTURAS VALIDAS';
+                $strSubSelect =" ,IFNULL(IAC.VALOR1, 0) AS COMPARATIVA
+                                    ,(IFNULL(IAC.VALOR1, 0)-IFNULL(COUNT(*), 0)) AS DIFERENCIA, -- Diferencia entre cantidad y comparativa
+                                    ROUND(
+                                        CASE 
+                                            WHEN IAC.VALOR1 IS NULL OR IAC.VALOR1 = 0 THEN 0
+                                            ELSE (IFNULL(COUNT(*), 0) / IAC.VALOR1) * 100
+                                        END, 2
+                                    ) AS PORCENTAJE ";
+                $strSubFrom .="  LEFT JOIN INFO_AREA_CARACT      IAC ON AR.ID_AREA = IAC.AREA_ID 
+                                    AND IAC.VALOR2 = :intMes
+                                    AND IAC.VALOR3 = :intAnio
+                                    LEFT JOIN ADMI_CARACTERISTICA   AC  ON AC.ID_CARACTERISTICA=IAC.CARACTERISTICA_ID
+                                    AND AC.DESCRIPCION = :strCaracteristica ";
+                $objQuery->setParameter("strCaracteristica",$strCaracteristica);
+            }
             if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
             {
                 $strSubFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL
@@ -1191,6 +1193,7 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         {
             $objRsmBuilder->addScalarResult('sucursal', 'sucursal', 'string');
             $objRsmBuilder->addScalarResult('area', 'area', 'string');
+            $objRsmBuilder->addScalarResult('idArea', 'idArea', 'string');
             foreach($arrayPregunta as $arrayItemPregunta)
             {
                 if($arrayItemPregunta["strEstado"] == "ACTIVO")
@@ -1199,10 +1202,10 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
                 }
             }
-            $strSelect      = " SELECT id,correo,sucursal,area, ".$strSelectPregunta." fecha";
+            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha, idArea";
             $strFrom        = " FROM ( ";
-            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ic.correo,ip.DESCRIPCION as pregunta, 
-                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado ";
+            $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
+                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado, ia.id_area as idArea ";
             $strSubFrom     = " FROM INFO_ENCUESTA ie
                                 JOIN INFO_AREA ia on ia.id_area=ie.area_id
                                 JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id

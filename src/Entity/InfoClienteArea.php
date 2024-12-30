@@ -2,20 +2,20 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoUsuarioAreaRepository;
+use App\Repository\InfoClienteAreaRepository;
 use Doctrine\ORM\Mapping as ORM;
-
+ 
 /**
- * InfoUsuarioArea
- * @ORM\Table(name="INFO_USUARIO_AREA")
- * @ORM\Entity(repositoryClass="App\Repository\InfoUsuarioAreaRepository")
- */
-class InfoUsuarioArea
+ * InfoClienteArea
+* @ORM\Table(name="INFO_CLIENTE_AREA")
+* @ORM\Entity(repositoryClass="App\Repository\InfoClienteAreaRepository")
+*/
+class InfoClienteArea
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_USUARIO_AREA", type="integer")
+     * @ORM\Column(name="ID_CLIENTE_AREA", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
@@ -23,14 +23,14 @@ class InfoUsuarioArea
 
 
     /**
-    * @var InfoUsuario
+    * @var InfoCliente
     *
-    * @ORM\ManyToOne(targetEntity="InfoUsuario")
+    * @ORM\ManyToOne(targetEntity="InfoCliente")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="USUARIO_ID", referencedColumnName="ID_USUARIO")
+    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
     * })
     */
-    private $USUARIO_ID;
+    private $CLIENTE_ID;
 
     /**
     * @var InfoArea
@@ -77,25 +77,25 @@ class InfoUsuarioArea
     }
 
     /**
-     * Get USUARIO_ID
+     * Get CLIENTE_ID
      *
-     * @return \App\Entity\InfoUsuario
+     * @return \App\Entity\InfoCliente
      */
-    public function getUSUARIOID()
+    public function getCLIENTEID()
     {
-        return $this->USUARIO_ID;
+        return $this->CLIENTE_ID;
     }
 
     /**
-     * Set setUSUARIOID
+     * Set setCLIENTEID
      *
-     * @param \App\Entity\InfoUsuario $USUARIO_ID
+     * @param \App\Entity\InfoCliente $CLIENTE_ID
      *
-     * @return InfoUsuarioArea
+     * @return InfoClienteArea
      */
-    public function setUSUARIOID(\App\Entity\InfoUsuario $USUARIO_ID = null)
+    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTE_ID = null)
     {
-        $this->USUARIO_ID = $USUARIO_ID;
+        $this->CLIENTE_ID = $CLIENTE_ID;
 
         return $this;
     }
@@ -115,7 +115,7 @@ class InfoUsuarioArea
      *
      * @param \App\Entity\InfoArea $AREA_ID
      *
-     * @return InfoUsuarioArea
+     * @return InfoClienteArea
      */
     public function setAREAID(\App\Entity\InfoArea $AREA_ID = null)
     {
@@ -185,3 +185,4 @@ class InfoUsuarioArea
     }
 
 }
+

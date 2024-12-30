@@ -91,7 +91,7 @@ class InfoUsuarioSucursal
      *
      * @param \App\Entity\InfoUsuario $USUARIO_ID
      *
-     * @return InfoUsuarioEmpresa
+     * @return InfoUsuarioSucursal
      */
     public function setUSUARIOID(\App\Entity\InfoUsuario $USUARIO_ID = null)
     {
@@ -115,7 +115,7 @@ class InfoUsuarioSucursal
      *
      * @param \App\Entity\InfoSucursal $SUCURSAL_ID
      *
-     * @return InfoUsuarioEmpresa
+     * @return InfoUsuarioSucursal
      */
     public function setSUCURSALID(\App\Entity\InfoSucursal $SUCURSAL_ID = null)
     {

@@ -2,45 +2,44 @@
 
 namespace App\Entity;
 
-use App\Repository\InfoUsuarioAreaRepository;
+use App\Repository\InfoClienteEmpresaRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * InfoUsuarioArea
- * @ORM\Table(name="INFO_USUARIO_AREA")
- * @ORM\Entity(repositoryClass="App\Repository\InfoUsuarioAreaRepository")
- */
-class InfoUsuarioArea
+ * InfoClienteEmpresa
+* @ORM\Table(name="INFO_CLIENTE_EMPRESA")
+* @ORM\Entity(repositoryClass="App\Repository\InfoClienteEmpresaRepository")
+*/
+class InfoClienteEmpresa
 {
     /**
      * @var int
      *
-     * @ORM\Column(name="ID_USUARIO_AREA", type="integer")
+     * @ORM\Column(name="ID_CLIENTE_EMPRESA", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
-
     /**
-    * @var InfoUsuario
+    * @var InfoCliente
     *
-    * @ORM\ManyToOne(targetEntity="InfoUsuario")
+    * @ORM\ManyToOne(targetEntity="InfoCliente")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="USUARIO_ID", referencedColumnName="ID_USUARIO")
+    * @ORM\JoinColumn(name="CLIENTE_ID", referencedColumnName="ID_CLIENTE")
     * })
     */
-    private $USUARIO_ID;
+    private $CLIENTE_ID;
 
     /**
-    * @var InfoArea
+    * @var InfoEmpresa
     *
-    * @ORM\ManyToOne(targetEntity="InfoArea")
+    * @ORM\ManyToOne(targetEntity="InfoEmpresa")
     * @ORM\JoinColumns({
-    * @ORM\JoinColumn(name="AREA_ID", referencedColumnName="ID_AREA")
+    * @ORM\JoinColumn(name="EMPRESA_ID", referencedColumnName="ID_EMPRESA")
     * })
     */
-    private $AREA_ID;
+    private $EMPRESA_ID;
 
     /**
      * @ORM\Column(type="string", length=50)
@@ -77,49 +76,49 @@ class InfoUsuarioArea
     }
 
     /**
-     * Get USUARIO_ID
+     * Get CLIENTE_ID
      *
-     * @return \App\Entity\InfoUsuario
+     * @return \App\Entity\InfoCliente
      */
-    public function getUSUARIOID()
+    public function getCLIENTEID()
     {
-        return $this->USUARIO_ID;
+        return $this->CLIENTE_ID;
     }
 
     /**
-     * Set setUSUARIOID
+     * Set setCLIENTEID
      *
-     * @param \App\Entity\InfoUsuario $USUARIO_ID
+     * @param \App\Entity\InfoCliente $CLIENTE_ID
      *
-     * @return InfoUsuarioArea
+     * @return InfoClienteEmpresa
      */
-    public function setUSUARIOID(\App\Entity\InfoUsuario $USUARIO_ID = null)
+    public function setCLIENTEID(\App\Entity\InfoCliente $CLIENTE_ID = null)
     {
-        $this->USUARIO_ID = $USUARIO_ID;
+        $this->CLIENTE_ID = $CLIENTE_ID;
 
         return $this;
     }
 
     /**
-     * Get AREA_ID
+     * Get EMPRESA_ID
      *
-     * @return \App\Entity\InfoArea
+     * @return \App\Entity\InfoEmpresa
      */
-    public function getAREAID()
+    public function getEMPRESAID()
     {
-        return $this->AREA_ID;
+        return $this->EMPRESA_ID;
     }
 
     /**
-     * Set setAREAID
+     * Set setEMPRESAID
      *
-     * @param \App\Entity\InfoArea $AREA_ID
+     * @param \App\Entity\InfoEmpresa $EMPRESA_ID
      *
-     * @return InfoUsuarioArea
+     * @return InfoClienteEmpresa
      */
-    public function setAREAID(\App\Entity\InfoArea $AREA_ID = null)
+    public function setEMPRESAID(\App\Entity\InfoEmpresa $EMPRESA_ID = null)
     {
-        $this->AREA_ID = $AREA_ID;
+        $this->EMPRESA_ID = $EMPRESA_ID;
 
         return $this;
     }

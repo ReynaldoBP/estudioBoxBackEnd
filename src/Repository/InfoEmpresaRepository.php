@@ -57,14 +57,17 @@ class InfoEmpresaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND IUE.USUARIO_ID = :intIdUsuario ";
                 $objQuery->setParameter("intIdUsuario", $arrayParametros["intIdUsuario"]);
             }
-            if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]))
+            if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]) && $arrayParametros["intIdCliente"] !=41)
             {
-                $strFrom  .= " JOIN INFO_SUCURSAL ISU ON ISU.EMPRESA_ID=IE.ID_EMPRESA ";
-                if($arrayParametros["intIdCliente"] !=41)
-                {
-                    $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
-                    $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
-                }
+                $strFrom  .= " JOIN INFO_CLIENTE_EMPRESA ICLTE ON ICLTE.EMPRESA_ID=IE.ID_EMPRESA
+                                    AND ICLTE.CLIENTE_ID=:intIdCliente
+                                JOIN INFO_SUCURSAL ISU ON ISU.EMPRESA_ID=IE.ID_EMPRESA
+                                LEFT JOIN INFO_CLIENTE_SUCURSAL ICLTS ON ICLTS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                                    AND ICLTS.CLIENTE_ID=:intIdCliente
+                                JOIN INFO_AREA IA ON IA.SUCURSAL_ID=ISU.ID_SUCURSAL
+                                LEFT JOIN INFO_CLIENTE_AREA ICLTA ON ICLTA.AREA_ID=IA.ID_AREA
+                                    AND ICLTA.CLIENTE_ID=:intIdCliente ";
+                $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
                 $strGroupBy = "GROUP BY 1 ";
             }
             if(isset($arrayParametros["strContador"]) && !empty($arrayParametros["strContador"]) && $arrayParametros["strContador"] == "SI")

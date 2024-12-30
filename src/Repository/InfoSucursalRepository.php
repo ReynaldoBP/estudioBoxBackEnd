@@ -66,6 +66,14 @@ class InfoSucursalRepository extends \Doctrine\ORM\EntityRepository
                 $objQuery->setParameter("intIdUsuarioEmpresa", $arrayParametros["intIdUsuarioEmpresa"]);
                 $objRsmBuilder->addScalarResult("ID_USUARIO_SUCURSAL", "intIdUsSucursal", "integer");
             }
+            if(isset($arrayParametros["intIdClienteEmpresa"]) && !empty($arrayParametros["intIdClienteEmpresa"]))
+            {
+                $strSelect .= " ,ICS.SUCURSAL_ID ";
+                $strFrom  .= " LEFT JOIN INFO_CLIENTE_SUCURSAL ICS ON ICS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                               AND ICS.ESTADO='ACTIVO' AND ICS.CLIENTE_ID = :intIdClienteEmpresa";
+                $objQuery->setParameter("intIdClienteEmpresa", $arrayParametros["intIdClienteEmpresa"]);
+                $objRsmBuilder->addScalarResult("SUCURSAL_ID", "intIdCltSucursal", "integer");
+            }
             if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
             {
                 $strFrom .= " JOIN INFO_USUARIO_SUCURSAL IUS ON IUS.SUCURSAL_ID=ISU.ID_SUCURSAL

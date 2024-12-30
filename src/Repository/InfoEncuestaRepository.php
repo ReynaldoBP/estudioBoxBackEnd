@@ -74,8 +74,15 @@ class InfoEncuestaRepository extends \Doctrine\ORM\EntityRepository
             }
             if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]))
             {
-                $strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
+                $strFrom  .= " JOIN INFO_CLIENTE_EMPRESA ICLTE ON ICLTE.EMPRESA_ID=IEM.ID_EMPRESA
+                                    AND ICLTE.CLIENTE_ID=:intIdCliente
+                                JOIN INFO_CLIENTE_SUCURSAL ICLTS ON ICLTS.SUCURSAL_ID=ISU.ID_SUCURSAL
+                                    AND ICLTS.CLIENTE_ID=:intIdCliente
+                                JOIN INFO_CLIENTE_AREA ICLTA ON ICLTA.AREA_ID=IA.ID_AREA
+                                    AND ICLTA.CLIENTE_ID=:intIdCliente ";
                 $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);
+                /*$strWhere .= " AND ISU.CLIENTE_ID = :intIdCliente ";
+                $objQuery->setParameter("intIdCliente", $arrayParametros["intIdCliente"]);*/
             }
             if(isset($arrayParametros["intIdSucursal"]) && !empty($arrayParametros["intIdSucursal"]))
             {

@@ -48,8 +48,21 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
                 $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
             }
-            $strSelect  = " SELECT IC.* ";
-            $strFrom    = " FROM INFO_CLIENTE IC ";
+            $strSelect  = " SELECT IC.*,
+                            CASE
+                            WHEN ICLTE.EMPRESA_ID !='' 
+                            THEN IE.NOMBRE_COMERCIAL
+                            ELSE ''
+                            END AS NOMBRE_EMPRESA,
+                            CASE
+                            WHEN ICLTE.EMPRESA_ID !='' 
+                            THEN IE.ID_EMPRESA
+                            ELSE ''
+                            END AS ID_EMPRESA ";
+            $strFrom    = " FROM INFO_CLIENTE IC 
+                            LEFT JOIN INFO_CLIENTE_EMPRESA ICLTE ON ICLTE.CLIENTE_ID   = IC.ID_CLIENTE
+                                    AND ICLTE.ESTADO='ACTIVO'
+                            LEFT JOIN INFO_EMPRESA IE   ON IE.ID_EMPRESA = ICLTE.EMPRESA_ID ";
             $strWhere   = " WHERE IC.ESTADO IN ('ACTIVO','INACTIVO') ";
             $strOrderBy = " ORDER BY IC.FE_CREACION ASC ";
             if(isset($arrayParametros["intIdCliente"]) && !empty($arrayParametros["intIdCliente"]))
@@ -70,6 +83,8 @@ class InfoClienteRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult("EDAD", "strEdad", "string");
             $objRsmBuilder->addScalarResult("GENERO", "strGenero", "string");
             $objRsmBuilder->addScalarResult("ESTADO", "strEstado", "string");
+            $objRsmBuilder->addScalarResult('NOMBRE_EMPRESA', 'strNombreEmpresa', 'string');
+            $objRsmBuilder->addScalarResult('ID_EMPRESA', 'intIdEmpresa', 'integer');
             $objRsmBuilder->addScalarResult("USR_CREACION", "strusrCreacion", "string");
             $objRsmBuilder->addScalarResult("FE_CREACION", "strFeCreacion", "string");
             $objRsmBuilder->addScalarResult("USR_MODIFICACION", "strUsrModificacion", "string");

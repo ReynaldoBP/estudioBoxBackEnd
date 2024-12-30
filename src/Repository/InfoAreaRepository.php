@@ -76,9 +76,16 @@ class InfoAreaRepository extends \Doctrine\ORM\EntityRepository
                 $strWhere .= " AND ISU.ID_SUCURSAL in (:arrayIdSucursal) ";
                 $objQuery->setParameter("arrayIdSucursal", $arrayParametros["arrayIdSucursal"]);
             }
+            if(isset($arrayParametros["intIdClienteEmpresa"]) && !empty($arrayParametros["intIdClienteEmpresa"]))
+            {
+                $strSelect .= " ,ICA.AREA_ID ";
+                $strFrom  .= " LEFT JOIN INFO_CLIENTE_AREA ICA ON ICA.AREA_ID=IA.ID_AREA
+                               AND ICA.ESTADO='ACTIVO' AND ICA.CLIENTE_ID = :intIdClienteEmpresa ";
+                $objQuery->setParameter("intIdClienteEmpresa", $arrayParametros["intIdClienteEmpresa"]);
+                $objRsmBuilder->addScalarResult("AREA_ID", "intIdCltArea", "integer");
+            }
             if(isset($arrayParametros["intIdUsuarioEmpresa"]) && !empty($arrayParametros["intIdUsuarioEmpresa"]))
             {
-                
                 $strSelect .= " ,IUA.ID_USUARIO_AREA ";
                 $strFrom  .= " LEFT JOIN INFO_USUARIO_AREA IUA ON IUA.AREA_ID=IA.ID_AREA
                                AND IUA.ESTADO='ACTIVO' AND IUA.USUARIO_ID = :intIdUsuarioEmpresa ";

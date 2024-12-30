@@ -11,9 +11,15 @@ use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
 use App\Entity\InfoCliente;
 use App\Entity\AdmiTipoRol;
+use App\Entity\InfoClienteEmpresa;
+use App\Entity\InfoEmpresa;
+use App\Entity\InfoSucursal;
+use App\Entity\InfoArea;
 use App\Entity\InfoUsuarioEmpresa;
 use App\Entity\InfoUsuario;
+use App\Entity\InfoClienteSucursal;
 use App\Entity\InfoUsuarioSucursal;
+use App\Entity\InfoClienteArea;
 use App\Entity\InfoUsuarioArea;
 class InfoClienteController extends AbstractController
 {
@@ -308,4 +314,245 @@ class InfoClienteController extends AbstractController
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }
+    /**
+     * @Rest\Post("/apiWeb/editCliente")
+     * 
+     * Documentación para la función 'editCliente'.
+     *
+     * Función que permite editar clientes.
+     *
+     * @author Kevin Baque Puya
+     * @version 1.0 29-12-2024
+     *
+     */
+    public function editCliente(Request $objRequest)
+    {
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayData            = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $arrayIdArea          = isset($arrayData["arrayIdArea"]) && !empty($arrayData["arrayIdArea"]) ? $arrayData["arrayIdArea"]:"";
+        $arrayIdSucursal      = isset($arrayData["arrayIdSucursal"]) && !empty($arrayData["arrayIdSucursal"]) ? $arrayData["arrayIdSucursal"]:"";
+        $intIdCliente         = isset($arrayData["intIdCliente"]) && !empty($arrayData["intIdCliente"]) ? $arrayData["intIdCliente"]:"";
+        $intIdEmpresa         = isset($arrayData["intIdEmpresa"]) && !empty($arrayData["intIdEmpresa"]) ? $arrayData["intIdEmpresa"]:"";
+        $strCorreo            = isset($arrayData["strCorreo"]) && !empty($arrayData["strCorreo"]) ? $arrayData["strCorreo"]:"";
+        $strEstado            = isset($arrayData["strEstado"]) && !empty($arrayData["strEstado"]) ? $arrayData["strEstado"]:"INACTIVO";
+        $strNombre            = isset($arrayData["strNombre"]) && !empty($arrayData["strNombre"]) ? $arrayData["strNombre"]:"";
+        $strUsrSesion         = isset($arrayData["strUsuarioCreacion"]) && !empty($arrayData["strUsuarioCreacion"]) ? $arrayData["strUsuarioCreacion"]:"webMovil";
+        $objResponse          = new Response;
+        $objDatetimeActual    = new \DateTime('now');
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        $objApiBitacora       = new InfoBitacoraController();
+        $objApiBitacora->setContainer($this->container);
+        try
+        {
+            error_log("------------------------");
+            error_log(print_r($arrayData,true));
+            error_log("------------------------");
+            $em->getConnection()->beginTransaction();
+            $objCliente = $this->getDoctrine()->getRepository(InfoCliente::class)->find($intIdCliente);
+            if(empty($objCliente) && !is_object($objCliente))
+            {
+                throw new \Exception('Cliente no existe');
+            }
+            else
+            {
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Nombre",
+                                               'VALOR_ANTERIOR' => $objCliente->getNOMBRE(),
+                                               'VALOR_ACTUAL'   => $strNombre,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Correo",
+                                               'VALOR_ANTERIOR' => $objCliente->getCORREO(),
+                                               'VALOR_ACTUAL'   => $strCorreo,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Estado",
+                                               'VALOR_ANTERIOR' => $objCliente->getESTADO(),
+                                               'VALOR_ACTUAL'   => $strEstado,
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $objCliente->setNOMBRE($strNombre);
+                $objCliente->setCORREO($strCorreo);
+                $objCliente->setESTADO(strtoupper($strEstado));
+                $objCliente->setUSRMODIFICACION($strUsrSesion);
+                $objCliente->setFEMODIFICACION($objDatetimeActual);
+                $em->persist($objCliente);
+                $em->flush();
+                //Ingreso de la empresa con relación al cliente.
+                $strValorAntUsEmpresa = "";
+                $arrayParametrosUsEmpresa = array('ESTADO'     => 'ACTIVO',
+                                                  'CLIENTE_ID' => $objCliente->getId());
+                $objClienteEmpresa = $this->getDoctrine()
+                                          ->getRepository(InfoClienteEmpresa::class)
+                                          ->findOneBy($arrayParametrosUsEmpresa);
+                if(is_object($objClienteEmpresa) && !empty($objClienteEmpresa))
+                {
+                    $strValorAntUsEmpresa = $objClienteEmpresa->getEMPRESAID()->getNOMBRECOMERCIAL();
+                    $em->remove($objClienteEmpresa);
+                    $em->flush();
+                }
+                if(empty($intIdEmpresa) || $intIdEmpresa == "")
+                {
+                    throw new \Exception("El parámetro intIdEmpresa es obligatorio cuando el tipo de rol es Empresa.");
+                }
+                else
+                {
+                    $objEmpresa = $this->getDoctrine()->getRepository(InfoEmpresa::class)->find($intIdEmpresa);
+                    if(empty($objEmpresa) || !is_object($objEmpresa))
+                    {
+                        throw new \Exception("No se encontró la empresa con los parámetros enviados.");
+                    }
+                }
+                $arrayBitacoraDetalle[]= array('CAMPO'          => "Empresa",
+                                               'VALOR_ANTERIOR' => $strValorAntUsEmpresa,
+                                               'VALOR_ACTUAL'   => $objEmpresa->getNOMBRECOMERCIAL(),
+                                               'USUARIO_ID'     => $strUsrSesion);
+                $entityClienteEmpresa = new InfoClienteEmpresa();
+                $entityClienteEmpresa->setCLIENTEID($objCliente);
+                $entityClienteEmpresa->setEMPRESAID($objEmpresa);
+                $entityClienteEmpresa->setESTADO(strtoupper($strEstado));
+                $entityClienteEmpresa->setUSRCREACION($strUsrSesion);
+                $entityClienteEmpresa->setFECREACION($objDatetimeActual);
+                $em->persist($entityClienteEmpresa);
+                $em->flush();
+                if(!empty($arrayIdSucursal))
+                {
+                    $arrayParametrosUsSucursal = array('ESTADO'     => 'ACTIVO',
+                                                       'CLIENTE_ID' => $objCliente->getId());
+                    $arrayClienteSucursal      = $this->getDoctrine()->getRepository(InfoClienteSucursal::class)
+                                                        ->findBy($arrayParametrosUsSucursal);
+                    $strSucursalAntiguaAsignada = "";
+                    if(is_array($arrayClienteSucursal) && !empty($arrayClienteSucursal))
+                    {
+                        foreach($arrayClienteSucursal as $arrayItem)
+                        {
+                            $strSucursalAntiguaAsignada = $arrayItem->getSUCURSALID()->getNOMBRE().", ";
+                            $objSucursal = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($$arrayItem->getSUCURSALID());
+                            $objSucursal->setCLIENTEID("");
+                            $em->remove($arrayItem);
+                            $em->flush();
+                        }
+                    }
+                    $strSucursalAsignada = "";
+                    foreach($arrayIdSucursal as $arrayItemSucursal)
+                    {
+                        $objSucursal = $this->getDoctrine()->getRepository(InfoSucursal::class)->find($arrayItemSucursal);
+                        if(empty($objSucursal) || !is_object($objSucursal))
+                        {
+                            throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                        }
+                        $objSucursal->setCLIENTEID($objCliente);
+                        $strSucursalAsignada = $strSucursalAsignada.$objSucursal->getNOMBRE().", ";
+                        $InfoClienteSucursal = new InfoClienteSucursal();
+                        $InfoClienteSucursal->setCLIENTEID($objCliente);
+                        $InfoClienteSucursal->setSUCURSALID($objSucursal);
+                        $InfoClienteSucursal->setESTADO(strtoupper($strEstado));
+                        $InfoClienteSucursal->setUSRCREACION($strUsrSesion);
+                        $InfoClienteSucursal->setFECREACION($objDatetimeActual);
+                        $em->persist($InfoClienteSucursal);
+                        $em->flush();
+                    }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Sucursales",
+                                                   'VALOR_ANTERIOR' => $strSucursalAntiguaAsignada,
+                                                   'VALOR_ACTUAL'   => $strSucursalAsignada,
+                                                   'USUARIO_ID'     => $strUsrSesion);
+                }
+                else
+                {
+                    $arrayParametrosUsSucursal  = array('ESTADO'     => 'ACTIVO',
+                                                        'CLIENTE_ID' => $objCliente->getId());
+                    $arrayClienteSucursal       = $this->getDoctrine()->getRepository(InfoClienteSucursal::class)
+                                                       ->findBy($arrayParametrosUsSucursal);
+                    $strSucursalAntiguaAsignada = "";
+                    if(is_array($arrayClienteSucursal) && !empty($arrayClienteSucursal))
+                    {
+                        error_log("if");
+                        foreach($arrayClienteSucursal as $arrayItem)
+                        {
+                            $strSucursalAntiguaAsignada = $arrayItem->getSUCURSALID()->getNOMBRE().", ";
+                            error_log($strSucursalAntiguaAsignada);
+                            $em->remove($arrayItem);
+                            $em->flush();
+                        }
+                    }
+                }
+                if(!empty($arrayIdArea))
+                {
+                    $arrayParametrosUsArea = array('ESTADO'     => 'ACTIVO',
+                                                   'CLIENTE_ID' => $objCliente->getId());
+                    $arrayClienteAarea = $this->getDoctrine()
+                                                ->getRepository(InfoClienteArea::class)
+                                                ->findBy($arrayParametrosUsArea);
+                    $strAreaAntiguaAsignada = "";
+                    if(is_array($arrayClienteAarea) && !empty($arrayClienteAarea))
+                    {
+                        foreach($arrayClienteAarea as $arrayItem)
+                        {
+                            $strAreaAntiguaAsignada = $arrayItem->getAREAID()->getAREA().", ";
+                            $em->remove($arrayItem);
+                            $em->flush();
+                        }
+                    }
+                    $strAreaAsignada = "";
+                    foreach($arrayIdArea as $arrayItemArea)
+                    {
+                        $objArea = $this->getDoctrine()->getRepository(InfoArea::class)->find($arrayItemArea);
+                        if(empty($objArea) || !is_object($objArea))
+                        {
+                            throw new \Exception("No se encontró la sucursal con los parámetros enviados.");
+                        }
+                        $strAreaAsignada = $strAreaAsignada.$objArea->getAREA().", ";
+                        $InfoClienteArea = new InfoClienteArea();
+                        $InfoClienteArea->setCLIENTEID($objCliente);
+                        $InfoClienteArea->setAREAID($objArea);
+                        $InfoClienteArea->setESTADO(strtoupper($strEstado));
+                        $InfoClienteArea->setUSRCREACION($strUsrSesion);
+                        $InfoClienteArea->setFECREACION($objDatetimeActual);
+                        $em->persist($InfoClienteArea);
+                        $em->flush();
+                    }
+                    $arrayBitacoraDetalle[]= array('CAMPO'          => "Areas",
+                                                   'VALOR_ANTERIOR' => $strAreaAntiguaAsignada,
+                                                   'VALOR_ACTUAL'   => $strAreaAsignada,
+                                                   'USUARIO_ID'     => $strUsrSesion);
+                }
+                else
+                {
+                    $arrayParametrosUsArea = array('ESTADO'     => 'ACTIVO',
+                                                   'CLIENTE_ID' => $objCliente->getId());
+                    $arrayClienteAarea     = $this->getDoctrine()
+                                                  ->getRepository(InfoClienteArea::class)
+                                                  ->findBy($arrayParametrosUsArea);
+                    $strAreaAntiguaAsignada = "";
+                    if(is_array($arrayClienteAarea) && !empty($arrayClienteAarea))
+                    {
+                        foreach($arrayClienteAarea as $arrayItem)
+                        {
+                            $strAreaAntiguaAsignada = $arrayItem->getAREAID()->getAREA().", ";
+                            $em->remove($arrayItem);
+                            $em->flush();
+                        }
+                    }
+                }
+            }
+            $strMensaje = "Cliente editado con éxito!";
+            if($em->getConnection()->isTransactionActive())
+            {
+                $em->getConnection()->commit();
+                $em->getConnection()->close();
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+            if($em->getConnection()->isTransactionActive())
+            {
+                $em->getConnection()->rollback();
+            }
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
+
 }

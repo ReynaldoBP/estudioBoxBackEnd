@@ -1202,10 +1202,11 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
                     $objRsmBuilder->addScalarResult($arrayItemPregunta["strPregunta"], $arrayItemPregunta["strPregunta"], 'string');
                 }
             }
-            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha, idArea";
+            $strSelect      = " SELECT id,sucursal,area, ".$strSelectPregunta." fecha, idArea, nombre_clte, correo_clte";
             $strFrom        = " FROM ( ";
             $strSubSelect   = " select ice.ID_CLT_ENCUESTA as id,ic.NOMBRE,ic.GENERO,ic.edad,ip.DESCRIPCION as pregunta, 
-                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado, ia.id_area as idArea ";
+                                ir.RESPUESTA as respuesta,ir.FE_CREACION as fecha, ia.area,isu.nombre as sucursal,ice.estado, ia.id_area as idArea,
+                                ic.nombre as nombre_clte, ic.correo as correo_clte ";
             $strSubFrom     = " FROM INFO_ENCUESTA ie
                                 JOIN INFO_AREA ia on ia.id_area=ie.area_id
                                 JOIN INFO_SUCURSAL isu on isu.id_sucursal=ia.sucursal_id
@@ -1240,6 +1241,8 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             $objRsmBuilder->addScalarResult('id', 'id', 'integer');
             $objRsmBuilder->addScalarResult('correo', 'correo', 'string');
             $objRsmBuilder->addScalarResult('fecha', 'fecha', 'string');
+            $objRsmBuilder->addScalarResult('nombre_clte', 'nombre_clte', 'string');
+            $objRsmBuilder->addScalarResult('correo_clte', 'correo_clte', 'string');
             $strSql         = $strSelect.$strFrom.$strGroupBy.$strOrderBy;
             $objQuery->setSQL($strSql);
             $arrayReporteCltEncuesta['resultados'] = $objQuery->getResult();

@@ -70,15 +70,14 @@ class InfoBitacoraController extends AbstractController
                 }
             }
             $em->persist($entityBitacora);
-            $em->flush();
             if(!empty($arrayBitacoraDetalle) && is_array($arrayBitacoraDetalle))
             {
-                error_log("Creacion detalle bitacora");
                 foreach($arrayBitacoraDetalle as $arrayItemDetalle)
                 {
                     if(!empty($arrayItemDetalle) && ($arrayItemDetalle["VALOR_ANTERIOR"] != $arrayItemDetalle["VALOR_ACTUAL"])
                        || $strAccion == "Eliminación")
                     {
+                        error_log("Creacion detalle bitacora");
                         error_log("CAMPO          : ".$arrayItemDetalle["CAMPO"]);
                         error_log("VALOR_ANTERIOR : ".$arrayItemDetalle["VALOR_ANTERIOR"]);
                         error_log("VALOR_ACTUAL   : ".$arrayItemDetalle["VALOR_ACTUAL"]);
@@ -101,10 +100,16 @@ class InfoBitacoraController extends AbstractController
                             }
                         }
                         $em->persist($entityDetalleBitacora);
-                        $em->flush();
+                        if ($em->getConnection()->isTransactionActive())
+                        {
+                            $em->flush();
+                            error_log("commit Bitacora");
+                            $em->getConnection()->commit();
+                        }
                     }
                 }
             }
+            $em->getConnection()->close();
             $strMensajeError = 'Bitacora creado con exito.!';
         }
         catch(\Exception $ex)
@@ -116,11 +121,6 @@ class InfoBitacoraController extends AbstractController
             }
             $strMensajeError = "Fallo al crear una bitacora, intente nuevamente.\n ". $ex->getMessage();
             error_log($strMensajeError);
-        }
-        if ($em->getConnection()->isTransactionActive())
-        {
-            $em->getConnection()->commit();
-            $em->getConnection()->close();
         }
         $objResponse->setContent(json_encode(array('status'    => $strStatus,
                                                    'resultado' => $strMensajeError,

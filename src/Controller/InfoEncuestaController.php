@@ -133,6 +133,7 @@ class InfoEncuestaController extends AbstractController
         $strMensaje              = "";
         $objApiBitacora          = new InfoBitacoraController();
         $objApiBitacora->setContainer($this->container);
+        error_log("Edición de Encuesta----------------------");
         try
         {
             if(empty($intIdEncuesta))
@@ -202,6 +203,7 @@ class InfoEncuestaController extends AbstractController
             $strMensaje = "¡Encuesta editada con éxito!";
             if($em->getConnection()->isTransactionActive())
             {
+                error_log("Commit Encuesta");
                 $em->getConnection()->commit();
                 $em->getConnection()->close();
             }

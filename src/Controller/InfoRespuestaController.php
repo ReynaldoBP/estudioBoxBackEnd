@@ -551,7 +551,96 @@ class InfoRespuestaController extends AbstractController
         $objResponse->headers->set("Access-Control-Allow-Origin", "*");
         return $objResponse;
     }
+    /**
+     * @Rest\Post("/apiWeb/descargarRespuestasGeneral")
+     *
+     * Documentación para la función 'descargarRespuestasGeneral'.
+     *
+     * Función que permite descargar las respuestas de los clientes de forma general
+     * 
+     * @author Kevin Baque
+     * @version 1.0 05-02-2024
+     * 
+     * @return array  $objResponse
+     */
+    public function descargarRespuestasGeneralAction(Request $objRequest)
+    {
+        error_reporting( error_reporting() & ~E_NOTICE );
+        $arrayRequest         = json_decode($objRequest->getContent(),true);
+        $arrayParametros      = isset($arrayRequest["data"]) && !empty($arrayRequest["data"]) ? $arrayRequest["data"]:array();
+        $objResponse          = new Response;
+        $intStatus            = 200;
+        $em                   = $this->getDoctrine()->getManager();
+        $strMensaje           = "";
+        try
+        {
+            error_log("------------------");
+            error_log(print_r($arrayParametros,true));
+            $objCltEncuesta = $this->getDoctrine()->getRepository(InfoClienteEncuesta::class)
+                                   ->find($arrayParametros["intIdCltEncuesta"]);
+            if(empty($objCltEncuesta) || !is_object($objCltEncuesta))
+            {
+                throw new \Exception("No existe encuesta con los parámetros enviados");
+            }
+            $objCliente     = $this->getDoctrine()->getRepository(InfoCliente::class)
+                                   ->find($objCltEncuesta->getCLIENTEID());
+            if(empty($objCliente) || !is_object($objCliente))
+            {
+                throw new \Exception("No existe cliente con los parámetros enviados");
+            }
+            $strEdadClt = "Sin Edad";
+            if($objCliente->getEDAD()!="SIN EDAD")
+            {
+                $strEdadClt = intval(date("Y"))-intval($objCliente->getEDAD());
+            }
+            $arrayDataRespuesta = $this->getDoctrine()->getRepository(InfoRespuesta::class)
+                                       ->getRespuesta($arrayParametros);
+            if(!empty($arrayDataRespuesta["error"]))
+            {
+                throw new \Exception($arrayDataRespuesta["error"]);
+            }
+            //Creación del html
+            $objPlantilla     = $this->getDoctrine()
+                                     ->getRepository(InfoPlantilla::class)
+                                     ->findOneBy(array("DESCRIPCION" => "REPORTE_GENERAL",
+                                                       "ESTADO"      => "ACTIVO"));
+            $strRespuesta = " ";
+            $strHtml      = stream_get_contents ($objPlantilla->getPLANTILLA());
+            $strHtml      = str_replace('strEncuesta',ucwords(strtolower($objCltEncuesta->getENCUESTAID()->getTITULO())),$strHtml);
+            $strHtml      = str_replace('strNombre',ucwords(strtolower($objCliente->getNOMBRE())),$strHtml);
 
+
+            $strHtml      = str_replace('strCorreo',$objCliente->getCORREO(),$strHtml);
+            $strHtml      = str_replace('strGenero',ucwords(strtolower($objCliente->getGENERO())),$strHtml);
+            $strHtml      = str_replace('strEdad',$strEdadClt,$strHtml);;
+            if(!empty($arrayDataRespuesta))
+            {
+                foreach($arrayDataRespuesta["resultados"] as $arrayItemRespuesta)
+                {
+                    $strRespuesta .=" <div class=\"survey-item\">
+                                     <p class=\"question\">".$arrayItemRespuesta["DESCRIPCION_PREGUNTA"]."</p>
+                                     <p class=\"answer\" id=\"respuesta1\">".ucwords(strtolower($arrayItemRespuesta["RESPUESTA"]))."</p>
+                                     </div> ";
+                    error_log("-----------------------------");
+                    error_log($arrayItemRespuesta["DESCRIPCION_PREGUNTA"]);
+                    error_log($arrayItemRespuesta["TIPO_RESPUESTA"]);
+                    error_log($arrayItemRespuesta["VALOR"]);
+                    error_log($arrayItemRespuesta["RESPUESTA"]);
+                }
+                $strHtml      = str_replace('strCuerpo',$strRespuesta,$strHtml);
+            }
+        }
+        catch(\Exception $ex)
+        {
+            $intStatus = 204;
+            $strMensaje = $ex->getMessage();
+        }
+        $objResponse->setContent(json_encode(array("intStatus"  => $intStatus,
+                                                   "arrayData"  => $strHtml,
+                                                   "strMensaje" => $strMensaje)));
+        $objResponse->headers->set("Access-Control-Allow-Origin", "*");
+        return $objResponse;
+    }
     /**
      * @Rest\Post("/apiWeb/getRespuesta")
      * 

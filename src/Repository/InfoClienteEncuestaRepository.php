@@ -346,13 +346,14 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
         try
         {
             $strSubSelect = "";
+            $strSelectFrom = "";
             $strSubFrom   = "";
             $strSubWhere  = "";
             if(!empty($intIdEmpresa) && empty($intIdSucursal))
             {
                 $strSubFrom   = " JOIN INFO_SUCURSAL ISU ON ISU.ID_SUCURSAL=AR.SUCURSAL_ID
                                   JOIN INFO_EMPRESA IEM ON IEM.ID_EMPRESA=ISU.EMPRESA_ID ";
-                $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." ";
+                $strSubWhere  = " AND IEM.ID_EMPRESA = ".$intIdEmpresa." AND ISU.ID_SUCURSAL = ".$intIdSucursal." ";
             }
             if(!empty($intIdSucursal))
             {
@@ -362,20 +363,21 @@ class InfoClienteEncuestaRepository extends \Doctrine\ORM\EntityRepository
             if($intIdEmpresa == 11 || $intIdEmpresa == 18 || $intIdEmpresa == 14)// Empresa Kennedy y Hospital de la ciudad
             {
                 $strCaracteristica = ($intIdEmpresa == 11 || $intIdEmpresa == 18) ? 'NUMERO_PACIENTE' : 'FACTURAS VALIDAS';
-                $strSubSelect =" ,IFNULL(IAC.VALOR1, 0) AS COMPARATIVA
-                                    ,(IFNULL(IAC.VALOR1, 0)-IFNULL(COUNT(*), 0)) AS DIFERENCIA, -- Diferencia entre cantidad y comparativa
-                                    ROUND(
+                $strSelectFrom .=" FROM  INFO_AREA_CARACT      IAC 
+                                    JOIN ADMI_CARACTERISTICA   AC  ON AC.ID_CARACTERISTICA=IAC.CARACTERISTICA_ID
+                                    WHERE AR.ID_AREA = IAC.AREA_ID 
+                                        AND IAC.VALOR2 = :intMes
+                                        AND IAC.VALOR3 = :intAnio
+                                        AND AC.DESCRIPCION = :strCaracteristica ";
+                $objQuery->setParameter("strCaracteristica",$strCaracteristica);
+                $strSubSelect =" ,(SELECT IFNULL(IAC.VALOR1, 0) AS COMPARATIVA ".$strSelectFrom.") AS COMPARATIVA
+                                 ,(SELECT (IFNULL(IAC.VALOR1, 0)-IFNULL(COUNT(*), 0)) AS DIFERENCIA ".$strSelectFrom.") AS DIFERENCIA
+                                 ,(SELECT ROUND(
                                         CASE 
                                             WHEN IAC.VALOR1 IS NULL OR IAC.VALOR1 = 0 THEN 0
                                             ELSE (IFNULL(COUNT(*), 0) / IAC.VALOR1) * 100
                                         END, 2
-                                    ) AS PORCENTAJE ";
-                $strSubFrom .="  LEFT JOIN INFO_AREA_CARACT      IAC ON AR.ID_AREA = IAC.AREA_ID 
-                                    AND IAC.VALOR2 = :intMes
-                                    AND IAC.VALOR3 = :intAnio
-                                    LEFT JOIN ADMI_CARACTERISTICA   AC  ON AC.ID_CARACTERISTICA=IAC.CARACTERISTICA_ID
-                                    AND AC.DESCRIPCION = :strCaracteristica ";
-                $objQuery->setParameter("strCaracteristica",$strCaracteristica);
+                                    ) AS PORCENTAJE ".$strSelectFrom." ) AS PORCENTAJE ";
             }
             if(isset($arrayParametros["arrayUsuarioSucursal"]) && !empty($arrayParametros["intIdUsuario"]) && !empty($arrayParametros["arrayUsuarioSucursal"]))
             {

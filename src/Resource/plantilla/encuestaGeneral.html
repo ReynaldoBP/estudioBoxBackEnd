@@ -1,0 +1,160 @@
+<div class="survey-results">
+
+    <div class="header">
+        <h1>strEncuesta</h1>
+    </div>
+    <!-- Sección de datos del encuestado -->
+    <div class="respondent-info">
+        <h3>Datos del Encuestado</h3>
+        <div class="respondent-grid">
+            <div class="respondent-item">
+                <span class="label">Nombre:</span>
+                <span class="value" id="nombreEncuestado">strNombre</span>
+            </div>
+            <div class="respondent-item">
+                <span class="label">Género:</span>
+                <span class="value" id="generoEncuestado">strGenero</span>
+            </div>
+            <div class="respondent-item">
+                <span class="label">Correo:</span>
+                <a href="mailto:strCorreo" class="value" id="correoEncuestado">strCorreo</a>
+            </div>
+
+            <div class="respondent-item">
+                <span class="label">Edad:</span>
+                <span class="value" id="edadEncuestado">strEdad</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de preguntas y respuestas -->
+    <div class="survey-content">
+        strCuerpo
+    </div>
+</div>
+<style>
+    .header {
+        background: linear-gradient(90deg, #6a11cb, #2575fc);
+        /* Degradado atractivo */
+        padding: 1.5rem;
+        text-align: center;
+        border-radius: 8px 8px 0 0;
+        /* Bordes superiores redondeados */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        /* Tamaño más grande para destacar */
+        font-weight: bold;
+        color: #ffffff;
+        /* Texto blanco para contraste */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        /* Sombra en el texto */
+        font-family: 'Arial', sans-serif;
+    }
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+
+    .survey-results {
+        max-width: 700px;
+        margin: 2rem auto;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+    }
+
+    h2 {
+        text-align: center;
+        font-size: 1.4rem;
+        color: #333333;
+        margin-bottom: 1rem;
+    }
+
+    .respondent-info {
+        margin-bottom: 1rem;
+        padding: 0.8rem;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #f9f9f9;
+    }
+
+    .respondent-info h3 {
+        font-size: 1rem;
+        color: #555555;
+        margin-bottom: 0.5rem;
+    }
+
+    .respondent-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem 1rem;
+    }
+
+    .respondent-item {
+        display: block;
+        /* Cambiamos de flexbox a bloque para mantener el texto en línea */
+        font-size: 0.9rem;
+    }
+
+    .respondent-item .label {
+        font-weight: bold;
+        color: #555555;
+        margin-right: 0.5rem;
+    }
+
+    .respondent-item .value {
+        font-weight: normal;
+        color: #333333;
+    }
+
+    .label {
+        font-weight: bold;
+        color: #555555;
+    }
+
+    .value {
+        color: #333333;
+    }
+
+    .survey-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .survey-item {
+        padding: 0.8rem;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #f9f9f9;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .survey-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .question {
+        font-size: 1rem;
+        color: #555555;
+        font-weight: bold;
+        margin: 0 0 0.3rem;
+    }
+
+    .answer {
+        font-size: 0.95rem;
+        color: #333333;
+        margin: 0;
+        padding-left: 0.5rem;
+    }
+
+</style>

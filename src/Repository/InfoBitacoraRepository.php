@@ -52,11 +52,11 @@ class InfoBitacoraRepository extends \Doctrine\ORM\EntityRepository
             }
             if(!empty($strFechaIni) && !empty($strFechaFin))
             {
-                $strWhere = " WHERE IBI.FE_CREACION BETWEEN '".$strFechaIni." 00:00:00' AND '".$strFechaFin." 23:59:59' ";
+                $strWhere .= " AND IBI.FE_CREACION BETWEEN '".$strFechaIni." 00:00:00' AND '".$strFechaFin." 23:59:59' ";
             }
             if(!empty($intIdBitacora))
             {
-                $strWhere .= " WHERE IBI.ID_BITACORA = :ID_BITACORA ";
+                $strWhere .= " AND IBI.ID_BITACORA = :ID_BITACORA ";
                 $objQuery->setParameter("ID_BITACORA", $intIdBitacora);
             }
             if(!empty($strAccion))
